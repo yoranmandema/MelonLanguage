@@ -1,0 +1,20 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace MelonLanguage.Compiling {
+    public enum OpCode : int {
+        ADD,
+        SUB,
+        MUL,
+        DIV,
+        MOD,
+        EXP,
+
+        LDSTR,
+        LDINT,
+        LDDEC,
+        LDBOOL,
+        LDNULL
+    }
+}

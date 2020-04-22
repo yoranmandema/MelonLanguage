@@ -1,0 +1,16 @@
+E:\GitHub\MelonLanguage\MelonLanguage\bin\Debug\netcoreapp3.1\MelonLanguage.deps.json
+E:\GitHub\MelonLanguage\MelonLanguage\bin\Debug\netcoreapp3.1\MelonLanguage.dll
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonLanguage.csprojAssemblyReference.cache
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonLanguage.AssemblyInfoInputs.cache
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonLanguage.AssemblyInfo.cs
+E:\GitHub\MelonLanguage\MelonLanguage\bin\Debug\netcoreapp3.1\MelonLanguage.pdb
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonLanguage.csproj.CoreCompileInputs.cache
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonLanguage.dll
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonLanguage.pdb
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonLexer.cs
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonParser.cs
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonLanguage.csproj.Antlr4GeneratedCodeFileListAbsolute.txt
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonListener.cs
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonBaseListener.cs
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonVisitor.cs
+E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonBaseVisitor.cs

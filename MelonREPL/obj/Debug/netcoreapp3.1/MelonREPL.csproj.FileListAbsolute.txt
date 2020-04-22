@@ -1,0 +1,17 @@
+E:\GitHub\MelonLanguage\MelonREPL\bin\Debug\netcoreapp3.1\MelonREPL.exe
+E:\GitHub\MelonLanguage\MelonREPL\bin\Debug\netcoreapp3.1\MelonREPL.deps.json
+E:\GitHub\MelonLanguage\MelonREPL\bin\Debug\netcoreapp3.1\MelonREPL.runtimeconfig.json
+E:\GitHub\MelonLanguage\MelonREPL\bin\Debug\netcoreapp3.1\MelonREPL.runtimeconfig.dev.json
+E:\GitHub\MelonLanguage\MelonREPL\bin\Debug\netcoreapp3.1\MelonREPL.dll
+E:\GitHub\MelonLanguage\MelonREPL\bin\Debug\netcoreapp3.1\MelonREPL.pdb
+E:\GitHub\MelonLanguage\MelonREPL\bin\Debug\netcoreapp3.1\Antlr4.Runtime.dll
+E:\GitHub\MelonLanguage\MelonREPL\bin\Debug\netcoreapp3.1\MelonLanguage.dll
+E:\GitHub\MelonLanguage\MelonREPL\bin\Debug\netcoreapp3.1\MelonLanguage.pdb
+E:\GitHub\MelonLanguage\MelonREPL\obj\Debug\netcoreapp3.1\MelonREPL.csprojAssemblyReference.cache
+E:\GitHub\MelonLanguage\MelonREPL\obj\Debug\netcoreapp3.1\MelonREPL.csproj.CoreCompileInputs.cache
+E:\GitHub\MelonLanguage\MelonREPL\obj\Debug\netcoreapp3.1\MelonREPL.AssemblyInfoInputs.cache
+E:\GitHub\MelonLanguage\MelonREPL\obj\Debug\netcoreapp3.1\MelonREPL.AssemblyInfo.cs
+E:\GitHub\MelonLanguage\MelonREPL\obj\Debug\netcoreapp3.1\MelonREPL.csproj.CopyComplete
+E:\GitHub\MelonLanguage\MelonREPL\obj\Debug\netcoreapp3.1\MelonREPL.dll
+E:\GitHub\MelonLanguage\MelonREPL\obj\Debug\netcoreapp3.1\MelonREPL.pdb
+E:\GitHub\MelonLanguage\MelonREPL\obj\Debug\netcoreapp3.1\MelonREPL.genruntimeconfig.cache
