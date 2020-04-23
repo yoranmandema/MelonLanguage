@@ -14,19 +14,19 @@ project.lock.json
 *.sln.docstates
 
 # Build results
-/**/[Dd]ebug/
-/**/[Dd]ebugPublic/
-/**/[Rr]elease/
-/**/[Rr]eleases/
-/**/x64/
-/**/x86/
-/**/build/
-/**/bld/
-/**/[Bb]in/
-/**/[Oo]bj/
-/**/msbuild.log
-/**/msbuild.err
-/**/msbuild.wrn
+/MelonREPL/[Dd]ebug/
+/MelonREPL/[Dd]ebugPublic/
+/MelonREPL/[Rr]elease/
+/MelonREPL/[Rr]eleases/
+/MelonREPL/x64/
+/MelonREPL/x86/
+/MelonREPL/build/
+/MelonREPL/bld/
+/MelonREPL/[Bb]in/
+/MelonREPL/[Oo]bj/
+/MelonREPL/msbuild.log
+/MelonREPL/msbuild.err
+/MelonREPL/msbuild.wrn
 
 # Visual Studio 2015
 .vs/
