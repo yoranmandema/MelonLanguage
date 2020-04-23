@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MelonLanguage.Compiling {
+﻿namespace MelonLanguage.Compiling {
     public enum OpCode : int {
         ADD,
         SUB,
@@ -14,7 +10,6 @@ namespace MelonLanguage.Compiling {
         LDSTR,
         LDINT,
         LDDEC,
-        LDBOOL,
-        LDNULL
+        LDBOOL
     }
 }

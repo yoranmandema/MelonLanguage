@@ -3,35 +3,27 @@ using System;
 using System.Diagnostics;
 
 namespace MelonREPL {
-    static class Program {
-        static void Main(string[] args) {
+    public static class Program {
+        public static void Main(string[] args) {
             MelonEngine engine = new MelonEngine();
 
-            var runs = 1e6;
-            var code = "3 + 4 * 5 + 10";
+            const int runs = (int)1e6;
+            const string code = "((3 + 4.5) * 5) + 10";
             var instructions = engine.Parse(code);
 
+            Console.WriteLine(string.Join(",", instructions));
+            Console.WriteLine($"Result {engine.Execute(instructions).CompletionValue}");
             Console.WriteLine($"Benchmarking '{code}' @ {runs} times");
-            Console.WriteLine("Benchmarking full parse...");
+            Console.WriteLine("Benchmarking only instructions...");
             Stopwatch sw = Stopwatch.StartNew();
 
-            for (int i = 0; i < 1e4; i++) {
-                engine.Execute(code);
-            }
-
-            sw.Stop();
-
-            Console.WriteLine($"Done in {sw.Elapsed.TotalMilliseconds}ms, {sw.Elapsed.TotalMilliseconds / runs}ms average per run");
-
-            Console.WriteLine("Benchmarking only instructions...");
-            sw = Stopwatch.StartNew();
-
-            for (int i = 0; i < 1e4; i++) {
-                engine.Execute(code);
+            for (int i = 0; i < runs; i++) {
+                engine.Execute(instructions);
             }
 
             sw.Stop();
             Console.WriteLine($"Done in {sw.Elapsed.TotalMilliseconds}ms, {sw.Elapsed.TotalMilliseconds / runs}ms average per run");
+            Console.WriteLine($"{1d / (sw.Elapsed.TotalSeconds / runs)} ops/s");
 
             while (true) {
                 Console.ForegroundColor = ConsoleColor.White;
@@ -39,7 +31,9 @@ namespace MelonREPL {
 
                 string line = Console.ReadLine();
 
-                if (line == "exit") return;
+                if (line == "exit") {
+                    return;
+                }
 
                 try {
                     engine.Execute(line);

@@ -3,16 +3,15 @@ using MelonLanguage.Grammar;
 using MelonLanguage.Native;
 using MelonLanguage.Runtime.Interpreter;
 using MelonLanguage.Visitor;
-using System;
+using System.Collections.Generic;
 
 namespace MelonLanguage {
     public class MelonEngine {
-
         public MelonObject CompletionValue { get; private set; }
 
-        public string[] strings { get; private set; }
+        public Dictionary<int, string> Strings { get; private set; }
 
-        public int[] Parse (string text) {
+        public int[] Parse(string text) {
             AntlrInputStream inputStream = new AntlrInputStream(text);
             MelonLexer speakLexer = new MelonLexer(inputStream);
             CommonTokenStream commonTokenStream = new CommonTokenStream(speakLexer);
@@ -22,15 +21,14 @@ namespace MelonLanguage {
 
             visitor.Visit(context);
 
-            strings = visitor.strings.ToArray();
+            Strings = visitor.strings;
 
             return visitor.instructions.ToArray();
         }
 
-        public MelonEngine Execute (string text) {
+        public MelonEngine Execute(string text) {
             var instructions = Parse(text);
-
-            var interpreter = new MelonInterpreter(strings);
+            var interpreter = new MelonInterpreter(Strings);
 
             CompletionValue = interpreter.Execute(instructions);
 
@@ -38,7 +36,7 @@ namespace MelonLanguage {
         }
 
         public MelonEngine Execute(int[] instructions) {
-            var interpreter = new MelonInterpreter(strings);
+            var interpreter = new MelonInterpreter(Strings);
 
             CompletionValue = interpreter.Execute(instructions);
 

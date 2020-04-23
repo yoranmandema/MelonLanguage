@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MelonLanguage.Native {
+﻿namespace MelonLanguage.Native {
     public class StringInstance : MelonObject {
         public string value;
 
