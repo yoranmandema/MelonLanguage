@@ -5,90 +5,89 @@ using System.Collections.Generic;
 
 namespace MelonLanguage.Runtime.Interpreter {
     public class MelonInterpreter {
-        public Stack<MelonObject> Memory { get; } = new Stack<MelonObject>();
-        public int InstructionCounter { get; private set; }
-        public Dictionary<int, string> Strings { get; }
+        private readonly ExpressionSolver _expressionSolver;
+        private readonly MelonEngine _engine;
+        
+        public MelonInterpreter(MelonEngine engine) {
+            _engine = engine;
 
-        private readonly ExpressionSolver _expressionSolver = new ExpressionSolver();
-
-        public MelonInterpreter(Dictionary<int, string> strings) {
-            Strings = strings;
+            _expressionSolver = new ExpressionSolver(engine);
         }
 
         public MelonObject Execute(int[] instructions) {
-            InstructionCounter = 0;
+            Context context = new Context(instructions);
 
-            while (InstructionCounter < instructions.Length) {
-                switch (instructions[InstructionCounter]) {
+            while (context.InstrCounter < instructions.Length) {
+                switch (context.Instruction) {
                     case (int)OpCode.LDBOOL:
-                        LoadBoolean(instructions);
+                        LoadBoolean(context);
                         break;
                     case (int)OpCode.LDINT:
-                        LoadInteger(instructions);
+                        LoadInteger(context);
                         break;
                     case (int)OpCode.LDDEC:
-                        LoadDecimal(instructions);
+                        LoadDecimal(context);
                         break;
                     case (int)OpCode.LDSTR:
-                        LoadString(instructions);
+                        LoadString(context);
                         break;
                     case (int)OpCode.ADD:
-                        AddOperation(instructions);
+                        AddOperation(context);
                         break;
                     case (int)OpCode.MUL:
-                        MulOperation(instructions);
+                        MulOperation(context);
                         break;
                 }
 
-                InstructionCounter++;
+                context.Next();
             }
 
-            return Memory.Peek();
+            return context.Last();
         }
-        private void LoadString(int[] instructions) {
-            InstructionCounter++;
+        private void LoadString(Context context) {
+            context.Next();
 
             // Retrieve string from string table
-            Memory.Push(new StringInstance(Strings[instructions[InstructionCounter]]));
+            context.Push(new StringInstance(_engine.Strings[context.Instruction]));
         }
 
-        private void LoadBoolean(int[] instructions) {
-            InstructionCounter++;
+        private void LoadBoolean(Context context) {
+            context.Next();
 
-            Memory.Push(new BooleanInstance(instructions[InstructionCounter] == 1));
+            context.Push(new BooleanInstance(context.Instruction == 1));
         }
 
-        private void LoadInteger(int[] instructions) {
-            InstructionCounter++;
+        private void LoadInteger(Context context) {
+            context.Next();
 
-            Memory.Push(new IntegerInstance(instructions[InstructionCounter]));
+            context.Push(new IntegerInstance(context.Instruction));
         }
 
-        private void LoadDecimal(int[] instructions) {
-            InstructionCounter++;
-            var left = instructions[InstructionCounter];
-            InstructionCounter++;
-            var right = instructions[InstructionCounter];
+        private void LoadDecimal(Context context) {
+            context.Next();
+            var left = context.Instruction;
+            context.Next();
+            var right = context.Instruction;
 
             // Converts 2 int32s into a single double
             long longVal = (long)left << 32 | (uint)right;
             var decimalVal = BitConverter.Int64BitsToDouble(longVal);
 
-            Memory.Push(new DecimalInstance(decimalVal));
+            context.Push(new DecimalInstance(decimalVal));
         }
 
-        private void AddOperation(int[] instructions) {
-            var right = Memory.Pop();
-            var left = Memory.Pop();
+        private void AddOperation(Context context) {
+            var right = context.Pop();
+            var left = context.Pop();
 
-            Memory.Push(_expressionSolver.Add(left, right));
+            context.Push(_expressionSolver.Add(left, right));
         }
 
-        private void MulOperation(int[] instructions) {
-            var right = Memory.Pop();
-            var left = Memory.Pop();
+        private void MulOperation(Context context) {
+            var right = context.Pop();
+            var left = context.Pop();
 
-            Memory.Push(_expressionSolver.Mul(left, right));
+            context.Push(_expressionSolver.Mul(left, right));
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using MelonLanguage;
+using MelonLanguage.Compiling;
 using System;
 using System.Diagnostics;
 
@@ -8,10 +9,13 @@ namespace MelonREPL {
             MelonEngine engine = new MelonEngine();
 
             const int runs = (int)1e6;
-            const string code = "((3 + 4.5) * 5) + 10";
+            const string code = "((3.0 + 4.5) * 5.0) + 10.0";
             var instructions = engine.Parse(code);
 
-            Console.WriteLine(string.Join(",", instructions));
+            var printer = new ByteCodePrinter(engine, instructions);
+            printer.Print();
+            printer.PrintHex();
+
             Console.WriteLine($"Result {engine.Execute(instructions).CompletionValue}");
             Console.WriteLine($"Benchmarking '{code}' @ {runs} times");
             Console.WriteLine("Benchmarking only instructions...");

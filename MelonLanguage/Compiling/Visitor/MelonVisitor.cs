@@ -11,7 +11,8 @@ namespace MelonLanguage.Visitor {
         public List<int> instructions = new List<int>();
         public Dictionary<int, string> strings = new Dictionary<int, string>();
 
-        private readonly ExpressionSolver _expressionSolver = new ExpressionSolver();
+        private readonly MelonEngine _engine;
+        private readonly ExpressionSolver _expressionSolver;
 
         internal static readonly Dictionary<string, OpCode> _opCodeText = new Dictionary<string, OpCode> {
             { "+", OpCode.ADD },
@@ -35,6 +36,11 @@ namespace MelonLanguage.Visitor {
             { typeof(StringInstance), OpCode.LDSTR },
             { typeof(BooleanInstance), OpCode.LDBOOL },
         };
+
+        public MelonVisitor (MelonEngine engine) {
+            _engine = engine;
+            _expressionSolver = new ExpressionSolver(engine);
+        }
 
         private int[] GetInstructionsForLiteralValue(MelonObject value) {
             if (value is IntegerInstance integerInstance) {
@@ -61,31 +67,34 @@ namespace MelonLanguage.Visitor {
         }
 
         public override object VisitBinaryOperationExp(MelonParser.BinaryOperationExpContext context) {
-            if (Visit(context.Left) is ParseResult leftResult && Visit(context.Right) is ParseResult rightResult) {
-                if (leftResult.isLiteral && rightResult.isLiteral) {
-                    // Remove left side instructions
-                    var leftLiteralOp = _opCodeLiteralTypes[leftResult.value.GetType()];
-                    instructions.RemoveRange(instructions.Count - _opCodeArgs[leftLiteralOp] - 1, _opCodeArgs[leftLiteralOp] + 1);
+            //if (Visit(context.Left) is ParseResult leftResult && Visit(context.Right) is ParseResult rightResult) {
+            //    if (leftResult.isLiteral && rightResult.isLiteral) {
+            //        // Remove left side instructions
+            //        var leftLiteralOp = _opCodeLiteralTypes[leftResult.value.GetType()];
+            //        instructions.RemoveRange(instructions.Count - _opCodeArgs[leftLiteralOp] - 1, _opCodeArgs[leftLiteralOp] + 1);
 
-                    // Remove right side instructions
-                    var rightLiteralOp = _opCodeLiteralTypes[rightResult.value.GetType()];
-                    instructions.RemoveRange(instructions.Count - _opCodeArgs[rightLiteralOp] - 1, _opCodeArgs[rightLiteralOp] + 1);
+            //        // Remove right side instructions
+            //        var rightLiteralOp = _opCodeLiteralTypes[rightResult.value.GetType()];
+            //        instructions.RemoveRange(instructions.Count - _opCodeArgs[rightLiteralOp] - 1, _opCodeArgs[rightLiteralOp] + 1);
 
-                    // Emit instructions for result value
-                    var result = _expressionSolver.Solve(_opCodeText[context.Operation.Text], leftResult.value, rightResult.value);
+            //        // Emit instructions for result value
+            //        var result = _expressionSolver.Solve(_opCodeText[context.Operation.Text], leftResult.value, rightResult.value);
 
-                    if (result is MelonErrorObject melonErrorObject) {
-                        throw new Exception(melonErrorObject.message);
-                    }
+            //        if (result is MelonErrorObject melonErrorObject) {
+            //            throw new Exception(melonErrorObject.message);
+            //        }
 
-                    instructions.AddRange(GetInstructionsForLiteralValue(result));
+            //        instructions.AddRange(GetInstructionsForLiteralValue(result));
 
-                    return new ParseResult {
-                        isLiteral = true,
-                        value = result
-                    };
-                }
-            }
+            //        return new ParseResult {
+            //            isLiteral = true,
+            //            value = result
+            //        };
+            //    }
+            //}
+
+            Visit(context.Left);
+            Visit(context.Right);
 
             instructions.Add((int)_opCodeText[context.Operation.Text]);
 

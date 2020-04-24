@@ -1,10 +1,17 @@
 ﻿using MelonLanguage.Compiling;
 using MelonLanguage.Native;
 using MelonLanguage.Visitor;
+using System;
 using System.Linq;
 
 namespace MelonLanguage.Runtime {
     public class ExpressionSolver {
+        private readonly MelonEngine _engine;
+
+        public ExpressionSolver (MelonEngine engine) {
+            _engine = engine;
+        }
+
         private MelonErrorObject ReturnError(OpCode op, MelonObject left, MelonObject right) {
             var operatorName = MelonVisitor._opCodeText.FirstOrDefault(x => x.Value == op).Key;
 
@@ -12,42 +19,36 @@ namespace MelonLanguage.Runtime {
         }
 
         public MelonObject Solve(OpCode op, MelonObject left, MelonObject right) {
-            switch (op) {
-                case OpCode.ADD:
-                    return Add(left, right);
-                case OpCode.MUL:
-                    return Mul(left, right);
-                default:
-                    return ReturnError(op, left, right);
-            }
+            return op switch
+            {
+                OpCode.ADD => Add(left, right),
+                OpCode.MUL => Mul(left, right),
+                _ => ReturnError(op, left, right),
+            };
         }
 
         public MelonObject Add(MelonObject left, MelonObject right) {
-            if (left is IntegerInstance && right is IntegerInstance) {
-                return new IntegerInstance((left as IntegerInstance).value + (right as IntegerInstance).value);
-            }
-            else if (left is IntegerInstance && right is DecimalInstance) {
-                return new DecimalInstance((left as IntegerInstance).value + (right as DecimalInstance).value);
-            }
-            else if (left is DecimalInstance && right is IntegerInstance) {
-                return new DecimalInstance((left as DecimalInstance).value + (right as IntegerInstance).value);
-            }      
+            MelonObject result = (left, right) switch
+            {
+                (IntegerInstance l, IntegerInstance r) => new IntegerInstance(l.value + r.value),
+                (DecimalInstance l, DecimalInstance r) => new DecimalInstance(l.value + r.value),
+                (StringInstance l, StringInstance r) => new StringInstance(l.value + r.value),
+                _ => ReturnError(OpCode.ADD, left, right)
+            };
 
-            return ReturnError(OpCode.ADD, left, right);
+
+            return result;
         }
 
         public MelonObject Mul(MelonObject left, MelonObject right) {
-            if (left is IntegerInstance && right is IntegerInstance) {
-                return new IntegerInstance((left as IntegerInstance).value * (right as IntegerInstance).value);
-            }
-            else if (left is IntegerInstance && right is DecimalInstance) {
-                return new DecimalInstance((left as IntegerInstance).value * (right as DecimalInstance).value);
-            }
-            else if (left is DecimalInstance && right is IntegerInstance) {
-                return new DecimalInstance((left as DecimalInstance).value * (right as IntegerInstance).value);
-            }
+            MelonObject result = (left, right) switch
+            {
+                (IntegerInstance l, IntegerInstance r) => new IntegerInstance(l.value * r.value),
+                (DecimalInstance l, DecimalInstance r) => new DecimalInstance(l.value * r.value),
+                _ => ReturnError(OpCode.MUL, left, right)
+            };
 
-            return ReturnError(OpCode.MUL, left, right);
+            return result;
         }
     }
 }

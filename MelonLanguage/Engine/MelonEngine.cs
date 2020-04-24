@@ -17,7 +17,7 @@ namespace MelonLanguage {
             CommonTokenStream commonTokenStream = new CommonTokenStream(speakLexer);
             MelonParser speakParser = new MelonParser(commonTokenStream);
             MelonParser.ProgramContext context = speakParser.program();
-            MelonVisitor visitor = new MelonVisitor();
+            MelonVisitor visitor = new MelonVisitor(this);
 
             visitor.Visit(context);
 
@@ -28,7 +28,7 @@ namespace MelonLanguage {
 
         public MelonEngine Execute(string text) {
             var instructions = Parse(text);
-            var interpreter = new MelonInterpreter(Strings);
+            var interpreter = new MelonInterpreter(this);
 
             CompletionValue = interpreter.Execute(instructions);
 
@@ -36,7 +36,7 @@ namespace MelonLanguage {
         }
 
         public MelonEngine Execute(int[] instructions) {
-            var interpreter = new MelonInterpreter(Strings);
+            var interpreter = new MelonInterpreter(this);
 
             CompletionValue = interpreter.Execute(instructions);
 
