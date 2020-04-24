@@ -1,6 +1,0 @@
-E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonLexer.cs
-E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonParser.cs
-E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonListener.cs
-E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonBaseListener.cs
-E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonVisitor.cs
-E:\GitHub\MelonLanguage\MelonLanguage\obj\Debug\netcoreapp3.1\MelonBaseVisitor.cs
