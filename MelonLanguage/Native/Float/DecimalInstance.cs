@@ -1,8 +1,8 @@
 ﻿namespace MelonLanguage.Native {
-    public class DecimalInstance : MelonObject {
+    public class FloatInstance : MelonObject {
         public double value;
 
-        public DecimalInstance(double val) {
+        public FloatInstance(double val) {
             value = val;
         }
 

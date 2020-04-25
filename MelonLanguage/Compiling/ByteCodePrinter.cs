@@ -2,16 +2,17 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace MelonLanguage.Compiling {
     public class ByteCodePrinter {
-        private readonly int[] _instructions;
+
         private readonly MelonEngine _engine;
+        private readonly Context _context;
 
-        public ByteCodePrinter (MelonEngine engine, int[] instructions) {
+        public ByteCodePrinter (MelonEngine engine, Context context) {
             _engine = engine;
-
-            _instructions = instructions;
+            _context = context;
         }
 
         private double GetDecimalValue (int left, int right) {
@@ -27,53 +28,76 @@ namespace MelonLanguage.Compiling {
 
             //Console.WriteLine(BitConverter.ToString(result).Replace("-", ""));
 
-            for (int i = 0; i < _instructions.Length; i++) {
-                Console.WriteLine(_instructions[i].ToString("X8"));
+            for (int i = 0; i < _context.Instructions.Length; i++) {
+                Console.WriteLine(_context.Instructions[i].ToString("X8"));
             }
         }
 
         public void Print () {
-            Context context = new Context(_instructions);
-            int instrNum = 0;
+            Console.WriteLine($"Instructions: {_context.Instructions.Length}");
 
-            while (context.InstrCounter < _instructions.Length) {
+            Console.WriteLine("Locals {");
+
+            for (int i = 0; i < _context.LocalNames.Length; i++) {
+                var type = _engine.Types[_context.LocalTypes[i]];
+
+                Console.WriteLine($"\t{i}: {type.Name}");
+            }
+
+            Console.WriteLine("}\n");
+
+            for (int instrNum = 0; _context.InstrCounter < _context.Instructions.Length; instrNum++) {
                 Console.Write($"MLN_{instrNum:x4}: ");
 
-                switch (context.Instruction) {
+                switch (_context.Instruction) {
                     case (int)OpCode.LDBOOL:
-                        context.Next();
+                        _context.Next();
 
                         Console.Write("LDBOOL ");
-                        Console.Write(context.Instruction == 1);
+                        Console.Write(_context.Instruction == 1);
                         Console.WriteLine();
 
                         break;
                     case (int)OpCode.LDINT:
-                        context.Next();
+                        _context.Next();
 
                         Console.Write("LDINT ");
-                        Console.Write(context.Instruction);
+                        Console.Write(_context.Instruction);
                         Console.WriteLine();
 
                         break;
-                    case (int)OpCode.LDDEC:
-                        context.Next();
+                    case (int)OpCode.LDFLO:
+                        _context.Next();
 
-                        int left = context.Instruction;
+                        int left = _context.Instruction;
 
-                        context.Next();
+                        _context.Next();
 
-                        int right = context.Instruction;
+                        int right = _context.Instruction;
 
                         Console.Write("LDDEC ");
-                        Console.Write(GetDecimalValue(left,right).ToString("0.0##############################"));
+                        Console.Write(GetDecimalValue(left, right).ToString("0.0##############################"));
                         Console.WriteLine();
                         break;
                     case (int)OpCode.LDSTR:
-                        context.Next();
+                        _context.Next();
 
                         Console.Write("LDSTR ");
-                        Console.Write(_engine.Strings[context.Instruction]);
+                        Console.Write(_engine.Strings[_context.Instruction]);
+                        Console.WriteLine();
+                        break;
+                    case (int)OpCode.STLOC:
+                        _context.Next();
+
+                        Console.Write("STLOC ");
+                        Console.Write(_context.Instruction);
+                        Console.WriteLine();
+                        break;
+                    case (int)OpCode.LDLOC:
+                        _context.Next();
+
+                        Console.Write("LDLOC ");
+                        Console.Write(_context.Instruction);
                         Console.WriteLine();
                         break;
                     case (int)OpCode.ADD:
@@ -84,9 +108,10 @@ namespace MelonLanguage.Compiling {
                         break;
                 }
 
-                context.Next();
-                instrNum++;
+                _context.Next();
             }
+
+            _context.Reset();
         }
     }
 }

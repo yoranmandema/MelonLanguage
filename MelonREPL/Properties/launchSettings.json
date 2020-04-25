@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Melon.REPL": {
+      "commandName": "Project",
+      "commandLineArgs": "Code/benchmark.mln"
+    }
+  }
+}

@@ -2,32 +2,41 @@
 using MelonLanguage.Compiling;
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 
 namespace MelonREPL {
     public static class Program {
         public static void Main(string[] args) {
             MelonEngine engine = new MelonEngine();
 
-            const int runs = (int)1e6;
-            const string code = "((3.0 + 4.5) * 5.0) + 10.0";
-            var instructions = engine.Parse(code);
+            const int runs = (int)1e7;
+            string _file = "";
 
-            var printer = new ByteCodePrinter(engine, instructions);
-            printer.Print();
-            printer.PrintHex();
+            if (args.Any())
+                _file = Path.Combine(Directory.GetCurrentDirectory(), args[0]);
 
-            Console.WriteLine($"Result {engine.Execute(instructions).CompletionValue}");
-            Console.WriteLine($"Benchmarking '{code}' @ {runs} times");
-            Console.WriteLine("Benchmarking only instructions...");
-            Stopwatch sw = Stopwatch.StartNew();
+            if (!string.IsNullOrEmpty(_file)) {
 
-            for (int i = 0; i < runs; i++) {
-                engine.Execute(instructions);
+                string code = System.IO.File.ReadAllText(_file);
+                var context = engine.Parse(code);
+
+                var printer = new ByteCodePrinter(engine, context);
+                printer.Print();
+
+                Console.WriteLine("");
+                Console.WriteLine($"Result {engine.Execute(context).CompletionValue}");
+                Console.WriteLine($"Benchmarking {runs} times");
+                Stopwatch sw = Stopwatch.StartNew();
+
+                for (int i = 0; i < runs; i++) {
+                    engine.Execute(context);
+                }
+
+                sw.Stop();
+                Console.WriteLine($"Done in {sw.Elapsed.TotalMilliseconds}ms, {sw.Elapsed.TotalMilliseconds / runs}ms average per run");
+                Console.WriteLine($"{1d / (sw.Elapsed.TotalSeconds / runs)} ops/s");
             }
-
-            sw.Stop();
-            Console.WriteLine($"Done in {sw.Elapsed.TotalMilliseconds}ms, {sw.Elapsed.TotalMilliseconds / runs}ms average per run");
-            Console.WriteLine($"{1d / (sw.Elapsed.TotalSeconds / runs)} ops/s");
 
             while (true) {
                 Console.ForegroundColor = ConsoleColor.White;

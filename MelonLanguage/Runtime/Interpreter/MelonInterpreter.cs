@@ -7,17 +7,16 @@ namespace MelonLanguage.Runtime.Interpreter {
     public class MelonInterpreter {
         private readonly ExpressionSolver _expressionSolver;
         private readonly MelonEngine _engine;
-        
+
         public MelonInterpreter(MelonEngine engine) {
             _engine = engine;
 
             _expressionSolver = new ExpressionSolver(engine);
         }
 
-        public MelonObject Execute(int[] instructions) {
-            Context context = new Context(instructions);
+        public MelonObject Execute(Context context) {
 
-            while (context.InstrCounter < instructions.Length) {
+            while (context.InstrCounter < context.Instructions.Length) {
                 switch (context.Instruction) {
                     case (int)OpCode.LDBOOL:
                         LoadBoolean(context);
@@ -25,7 +24,7 @@ namespace MelonLanguage.Runtime.Interpreter {
                     case (int)OpCode.LDINT:
                         LoadInteger(context);
                         break;
-                    case (int)OpCode.LDDEC:
+                    case (int)OpCode.LDFLO:
                         LoadDecimal(context);
                         break;
                     case (int)OpCode.LDSTR:
@@ -37,6 +36,14 @@ namespace MelonLanguage.Runtime.Interpreter {
                     case (int)OpCode.MUL:
                         MulOperation(context);
                         break;
+                    case (int)OpCode.LDLOC:
+                        LDLOC(context);
+                        break;
+                    case (int)OpCode.STLOC:
+                        STLOC(context);
+                        break;
+                    default:
+                        throw new MelonException($"Unknown instruction '{context.Instruction:X4}'");
                 }
 
                 context.Next();
@@ -60,7 +67,7 @@ namespace MelonLanguage.Runtime.Interpreter {
         private void LoadInteger(Context context) {
             context.Next();
 
-            context.Push(new IntegerInstance(context.Instruction));
+            context.Push(_engine.CreateInteger(context.Instruction));
         }
 
         private void LoadDecimal(Context context) {
@@ -73,7 +80,7 @@ namespace MelonLanguage.Runtime.Interpreter {
             long longVal = (long)left << 32 | (uint)right;
             var decimalVal = BitConverter.Int64BitsToDouble(longVal);
 
-            context.Push(new DecimalInstance(decimalVal));
+            context.Push(new FloatInstance(decimalVal));
         }
 
         private void AddOperation(Context context) {
@@ -88,6 +95,20 @@ namespace MelonLanguage.Runtime.Interpreter {
             var left = context.Pop();
 
             context.Push(_expressionSolver.Mul(left, right));
+        }
+
+        private void STLOC(Context context) {
+            context.Next();
+
+            var value = context.Last();
+
+            context.LocalValues[context.Instruction] = value;
+        }
+
+        private void LDLOC(Context context) {
+            context.Next();
+
+            context.Push(context.LocalValues[context.Instruction]);
         }
     }
 }

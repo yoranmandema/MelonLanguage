@@ -15,4 +15,10 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Code\benchmark.mln">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

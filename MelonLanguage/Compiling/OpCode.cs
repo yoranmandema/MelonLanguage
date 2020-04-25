@@ -9,7 +9,10 @@
 
         LDSTR,
         LDINT,
-        LDDEC,
-        LDBOOL
+        LDFLO,
+        LDBOOL,
+
+        STLOC,
+        LDLOC,
     }
 }

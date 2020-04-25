@@ -9,7 +9,8 @@ using System.Linq;
 namespace MelonLanguage.Visitor {
     public partial class MelonVisitor : MelonBaseVisitor<object> {
         public List<int> instructions = new List<int>();
-        public Dictionary<int, string> strings = new Dictionary<int, string>();
+        public List<int> locals = new List<int>();
+        public LexicalEnvironment lexicalEnvironment;
 
         private readonly MelonEngine _engine;
         private readonly ExpressionSolver _expressionSolver;
@@ -27,12 +28,12 @@ namespace MelonLanguage.Visitor {
             { OpCode.LDINT, 1 },
             { OpCode.LDSTR, 1 },
             { OpCode.LDBOOL, 1 },
-            { OpCode.LDDEC, 2 }
+            { OpCode.LDFLO, 2 }
         };
 
         internal static readonly Dictionary<Type, OpCode> _opCodeLiteralTypes = new Dictionary<Type, OpCode> {
             { typeof(IntegerInstance), OpCode.LDINT },
-            { typeof(DecimalInstance), OpCode.LDDEC },
+            { typeof(FloatInstance), OpCode.LDFLO },
             { typeof(StringInstance), OpCode.LDSTR },
             { typeof(BooleanInstance), OpCode.LDBOOL },
         };
@@ -40,6 +41,19 @@ namespace MelonLanguage.Visitor {
         public MelonVisitor (MelonEngine engine) {
             _engine = engine;
             _expressionSolver = new ExpressionSolver(engine);
+            lexicalEnvironment = new LexicalEnvironment(engine);
+        }
+
+        public void Parse (MelonParser.ProgramContext context) {
+            Visit(context);
+
+            lexicalEnvironment = lexicalEnvironment.Root;
+        }
+
+        public override object VisitBlock(MelonParser.BlockContext context) {
+            lexicalEnvironment = new LexicalEnvironment(lexicalEnvironment);
+
+            return base.VisitBlock(context);
         }
 
         private int[] GetInstructionsForLiteralValue(MelonObject value) {
@@ -48,18 +62,74 @@ namespace MelonLanguage.Visitor {
                     (int)OpCode.LDINT, integerInstance.value
                 };
             }
-            else if (value is DecimalInstance decimalInstance) {
+            else if (value is FloatInstance decimalInstance) {
                 // Split double value into 2 int32s
                 var bit64 = BitConverter.DoubleToInt64Bits(decimalInstance.value);
                 var left = (int)(bit64 >> 32);
                 var right = (int)bit64;
 
                 return new int[] {
-                    (int)OpCode.LDDEC, left, right
+                    (int)OpCode.LDFLO, left, right
                 };
             }
 
             return new int[0];
+        }
+
+        public override object VisitAssignStatement(MelonParser.AssignStatementContext context) {
+            Visit(context.expression());
+
+            var typeName = context.name(0).value;
+            var typeKv = _engine.Types.FirstOrDefault(x => x.Value.Name == typeName);
+
+            if (typeKv.Value == null) throw new MelonException($"Could not find type '{typeName}'");
+
+            var name = context.name(1).value;
+            var variable = lexicalEnvironment.GetVariable(name);
+
+            int id;
+
+            if (variable != null) {
+                id = variable.id;
+            } else {
+                locals.Add(typeKv.Key);
+                id = locals.Count - 1;
+
+                var newVariable = new Variable {
+                    id = id,
+                    name = name,
+                    type = typeKv.Value
+                };
+
+                lexicalEnvironment.Variables.Add(name, newVariable);
+            }
+
+            instructions.Add((int)OpCode.STLOC);
+            instructions.Add(id);
+
+            return DefaultResult;
+        }
+
+        public override object VisitNameExp(MelonParser.NameExpContext context) {
+            var name = context.name().value;
+            var variable = lexicalEnvironment.GetVariable(name);
+
+            Console.WriteLine($"Reference to {name}");
+            Console.WriteLine(context.parent.GetText());
+            
+            int id;
+
+            if (variable != null) {
+                id = variable.id;
+
+            } else {
+                throw new MelonException($"Variable '{name}' does not exist!");
+            }
+
+            instructions.Add((int)OpCode.LDLOC);
+            instructions.Add(id);
+
+            return DefaultResult;
         }
 
         public override object VisitParenthesisExp(MelonParser.ParenthesisExpContext context) {
@@ -67,34 +137,34 @@ namespace MelonLanguage.Visitor {
         }
 
         public override object VisitBinaryOperationExp(MelonParser.BinaryOperationExpContext context) {
-            //if (Visit(context.Left) is ParseResult leftResult && Visit(context.Right) is ParseResult rightResult) {
-            //    if (leftResult.isLiteral && rightResult.isLiteral) {
-            //        // Remove left side instructions
-            //        var leftLiteralOp = _opCodeLiteralTypes[leftResult.value.GetType()];
-            //        instructions.RemoveRange(instructions.Count - _opCodeArgs[leftLiteralOp] - 1, _opCodeArgs[leftLiteralOp] + 1);
+            var left = Visit(context.Left);
+            var right = Visit(context.Right);
 
-            //        // Remove right side instructions
-            //        var rightLiteralOp = _opCodeLiteralTypes[rightResult.value.GetType()];
-            //        instructions.RemoveRange(instructions.Count - _opCodeArgs[rightLiteralOp] - 1, _opCodeArgs[rightLiteralOp] + 1);
+            if (left is ParseResult leftResult && right is ParseResult rightResult) {
+                if (leftResult.isLiteral && rightResult.isLiteral) {
+                    // Remove left side instructions
+                    var leftLiteralOp = _opCodeLiteralTypes[leftResult.value.GetType()];
+                    instructions.RemoveRange(instructions.Count - _opCodeArgs[leftLiteralOp] - 1, _opCodeArgs[leftLiteralOp] + 1);
 
-            //        // Emit instructions for result value
-            //        var result = _expressionSolver.Solve(_opCodeText[context.Operation.Text], leftResult.value, rightResult.value);
+                    // Remove right side instructions
+                    var rightLiteralOp = _opCodeLiteralTypes[rightResult.value.GetType()];
+                    instructions.RemoveRange(instructions.Count - _opCodeArgs[rightLiteralOp] - 1, _opCodeArgs[rightLiteralOp] + 1);
 
-            //        if (result is MelonErrorObject melonErrorObject) {
-            //            throw new Exception(melonErrorObject.message);
-            //        }
+                    // Emit instructions for result value
+                    var result = _expressionSolver.Solve(_opCodeText[context.Operation.Text], leftResult.value, rightResult.value);
 
-            //        instructions.AddRange(GetInstructionsForLiteralValue(result));
+                    if (result is MelonErrorObject melonErrorObject) {
+                        throw new Exception(melonErrorObject.message);
+                    }
 
-            //        return new ParseResult {
-            //            isLiteral = true,
-            //            value = result
-            //        };
-            //    }
-            //}
+                    instructions.AddRange(GetInstructionsForLiteralValue(result));
 
-            Visit(context.Left);
-            Visit(context.Right);
+                    return new ParseResult {
+                        isLiteral = true,
+                        value = result
+                    };
+                }
+            }
 
             instructions.Add((int)_opCodeText[context.Operation.Text]);
 
@@ -104,13 +174,13 @@ namespace MelonLanguage.Visitor {
         private void EmitLDSTR(string value) {
             int strKey = -1;
 
-            if (strings.ContainsValue(value)) {
-                strKey = strings.First(x => x.Value == value).Key;
+            if (_engine.Strings.ContainsValue(value)) {
+                strKey = _engine.Strings.First(x => x.Value == value).Key;
             }
             else {
-                strings.Add(strings.Count, value);
+                _engine.Strings.Add(_engine.Strings.Count, value);
 
-                strKey = strings.Count;
+                strKey = _engine.Strings.Count;
             }
 
             instructions.Add((int)OpCode.LDSTR);
@@ -150,12 +220,12 @@ namespace MelonLanguage.Visitor {
 
             return new ParseResult {
                 isLiteral = true,
-                value = new IntegerInstance(context.integer().value)
+                value = _engine.CreateInteger(context.integer().value)
             };
         }
 
         private void EmitLDDEC(double value) {
-            instructions.Add((int)OpCode.LDDEC);
+            instructions.Add((int)OpCode.LDFLO);
 
             // Split double value into 2 int32s
             var bit64 = BitConverter.DoubleToInt64Bits(value);
@@ -166,12 +236,12 @@ namespace MelonLanguage.Visitor {
             instructions.Add(right);
         }
 
-        public override object VisitDecimalLiteral(MelonParser.DecimalLiteralContext context) {
-            EmitLDDEC(context.@decimal().value);
+        public override object VisitFloatLiteral(MelonParser.FloatLiteralContext context) {
+            EmitLDDEC(context.@float().value);
 
             return new ParseResult {
                 isLiteral = true,
-                value = new DecimalInstance(context.@decimal().value)
+                value = new FloatInstance(context.@float().value)
             };
         }
     }

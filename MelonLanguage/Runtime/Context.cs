@@ -5,6 +5,11 @@ using System.Text;
 
 namespace MelonLanguage.Runtime {
     public class Context {
+
+        public int[] LocalTypes { get; }
+        public string[] LocalNames { get; }
+        public MelonObject[] LocalValues { get; }
+
         public int InstrCounter { get; private set; }
 
         public int Instruction { get {
@@ -12,11 +17,22 @@ namespace MelonLanguage.Runtime {
             }
         }
 
-        private readonly int[] _instructions;
-        private readonly Stack<MelonObject> _stack = new Stack<MelonObject>();
+        public int[] Instructions => _instructions;
 
-        public Context (int[] instructions) {
+        private readonly int[] _instructions;
+        public readonly Stack<MelonObject> _stack = new Stack<MelonObject>();
+
+        public Context (string[] localNames, int[] localTypes, int[] instructions) {
             _instructions = instructions;
+            LocalNames = localNames;
+            LocalTypes = localTypes;
+
+            LocalValues = new MelonObject[localTypes.Length];
+        }
+
+        public void Reset () {
+            InstrCounter = 0;
+            _stack.Clear();
         }
 
         public void Next () {

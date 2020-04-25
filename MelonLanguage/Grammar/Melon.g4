@@ -4,7 +4,11 @@ grammar Melon;
  * Parser Rules
  */
 program : block EOF ;
-block : ( expression )*;
+block : ( assignment )*;
+
+assignment : name name ASSIGN expression 
+#assignStatement
+;
 
 expression : 
 	LEFTPARENTHESIS expression RIGHTPARENTHESIS 
@@ -17,10 +21,12 @@ expression :
 	#binaryOperationExp
     | Left=expression Operation=(PLUS|MINUS) Right=expression				
 	#binaryOperationExp
+	| name
+	#nameExp
 	| integer																									
 	#integerLiteral
-	| decimal																									
-	#decimalLiteral
+	| float																									
+	#floatLiteral
 	| string																									
 	#stringLiteral
 	| boolean																									
@@ -28,6 +34,10 @@ expression :
 	| null																										
 	#nullLiteral
 ;
+
+name returns [string value] : NAME { 
+	$value = $NAME.text;
+} ;
 
 string returns [string value] : STRING { 
 	if ($STRING.text.Length > 2) {
@@ -38,8 +48,8 @@ string returns [string value] : STRING {
 	}
 } ;
 
-decimal returns [double value] : DECIMAL { 
-	$value = double.Parse($DECIMAL.text); 
+float returns [double value] : FLOAT { 
+	$value = double.Parse($FLOAT.text); 
 } ;
 
 integer returns [int value] : INTEGER {
@@ -69,6 +79,8 @@ COMMA					: ',' ;
 LEFTPARENTHESIS			: '(' ;
 RIGHTPARENTHESIS		: ')' ;
 
+LET						: 'let' ;
+
 IF						: 'if' ;
 ELSE					: 'else' ;
 
@@ -76,12 +88,12 @@ LESS					: '<'	;
 LESSEQ					: '<='	;
 GREATER					: '>'	;
 GREATEREQ				: '>='	;
-EQUAL					: '=='	;
-NOTEQUAL				: '!='	;
+EQUAL					: 'is'	;
+NOTEQUAL				: 'is not'	;
 IS						: 'is' ;
 
-AND						: '&&' ;
-OR						: '||' ;
+AND						: 'and' ;
+OR						: 'or' ;
 
 ASTERISK				: '*'	;
 SLASH					: '/'	;
@@ -112,7 +124,7 @@ NAME					: ('_' | LETTER) ('_' | LETTER | DIGIT)*;
 
 INTEGER					: DIGIT+;
 
-DECIMAL					: DIGIT+ ('.' DIGIT+)?;
+FLOAT					: DIGIT+ ('.' DIGIT+)?;
 
 STRING					: '"' ~('"')* ('"' | {
 	throw new System.Exception("Unterminated string!");

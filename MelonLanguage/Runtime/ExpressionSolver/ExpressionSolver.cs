@@ -30,8 +30,8 @@ namespace MelonLanguage.Runtime {
         public MelonObject Add(MelonObject left, MelonObject right) {
             MelonObject result = (left, right) switch
             {
-                (IntegerInstance l, IntegerInstance r) => new IntegerInstance(l.value + r.value),
-                (DecimalInstance l, DecimalInstance r) => new DecimalInstance(l.value + r.value),
+                (IntegerInstance l, IntegerInstance r) => _engine.CreateInteger(l.value + r.value),
+                (FloatInstance l, FloatInstance r) => new FloatInstance(l.value + r.value),
                 (StringInstance l, StringInstance r) => new StringInstance(l.value + r.value),
                 _ => ReturnError(OpCode.ADD, left, right)
             };
@@ -43,8 +43,8 @@ namespace MelonLanguage.Runtime {
         public MelonObject Mul(MelonObject left, MelonObject right) {
             MelonObject result = (left, right) switch
             {
-                (IntegerInstance l, IntegerInstance r) => new IntegerInstance(l.value * r.value),
-                (DecimalInstance l, DecimalInstance r) => new DecimalInstance(l.value * r.value),
+                (IntegerInstance l, IntegerInstance r) => _engine.CreateInteger(l.value * r.value),
+                (FloatInstance l, FloatInstance r) => new FloatInstance(l.value * r.value),
                 _ => ReturnError(OpCode.MUL, left, right)
             };
 
