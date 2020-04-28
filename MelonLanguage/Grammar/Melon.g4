@@ -4,22 +4,38 @@ grammar Melon;
  * Parser Rules
  */
 program : block EOF ;
-block : ( assignment )*;
+block : ( variableDefinition | assignment | while )*;
+ 
+while : WHILE '(' expression ')' '{' block '}' 
+#whileStatement
+;
 
-assignment : name name ASSIGN expression 
+variableDefinition : name name ASSIGN expression 
+#variableDefinitionStatement
+;
+
+assignment : name ASSIGN expression 
 #assignStatement
 ;
+
+expressionGroup	: (expression (',' expression)*)?;
 
 expression : 
 	LEFTPARENTHESIS expression RIGHTPARENTHESIS 
 	#parenthesisExp
-	| expression DOT NAME
+	| expression DOT name
 	#memberAccessExp
-	| <assoc=right>	Left=expression Operation=EXPONENT Right=expression			
+	| Function=expression LEFTPARENTHESIS Arguments=expressionGroup  RIGHTPARENTHESIS
+	#callExp
+	| <assoc=right>	Left=expression Operation=EXPONENT Right=expression	
 	#binaryOperationExp
     | Left=expression Operation=(ASTERISK|SLASH|REMAINDER) Right=expression				
 	#binaryOperationExp
     | Left=expression Operation=(PLUS|MINUS) Right=expression				
+	#binaryOperationExp
+	| Left=expression Operation=(LESS|LESSEQ|GREATER|GREATEREQ)	Right=expression			
+	#binaryOperationExp
+    | Left=expression Operation=(EQUAL|NOTEQUAL|IS)	Right=expression			
 	#binaryOperationExp
 	| name
 	#nameExp
@@ -74,47 +90,45 @@ fragment ESCAPED_QUOTE	: '\\"';
 fragment TRUE			: 'true';
 fragment FALSE			: 'false';
 
-DOT						: '.' ;
-COMMA					: ',' ;
-LEFTPARENTHESIS			: '(' ;
-RIGHTPARENTHESIS		: ')' ;
+DOT						: '.';
+COMMA					: ',';
+LEFTPARENTHESIS			: '(';
+RIGHTPARENTHESIS		: ')';
 
-LET						: 'let' ;
+IF						: 'if';
+ELSE					: 'else';
+WHILE					: 'while';
 
-IF						: 'if' ;
-ELSE					: 'else' ;
+LESS					: '<';
+LESSEQ					: '<=';
+GREATER					: '>';
+GREATEREQ				: '>=';
+NOTEQUAL				: 'is not';
+EQUAL					: 'is';
 
-LESS					: '<'	;
-LESSEQ					: '<='	;
-GREATER					: '>'	;
-GREATEREQ				: '>='	;
-EQUAL					: 'is'	;
-NOTEQUAL				: 'is not'	;
-IS						: 'is' ;
+AND						: 'and';
+OR						: 'or';
 
-AND						: 'and' ;
-OR						: 'or' ;
+ASTERISK				: '*';
+SLASH					: '/';
+PLUS					: '+';
+MINUS					: '-';
+REMAINDER				: '%';
+EXPONENT				: '**';
 
-ASTERISK				: '*'	;
-SLASH					: '/'	;
-PLUS					: '+'	;
-MINUS					: '-'	;
-REMAINDER				: '%'	;
-EXPONENT				: '**'	;
+BITAND					: '&';
+BITOR					: '^';
+BITXOR					: '|'; 
+BITSHIFTL				: '<<'; 
+BITSHIFTR				: '>>'; 
+BITSHIFTUR				: '>>>'; 
 
-BITAND					: '&' ;
-BITOR					: '^' ;
-BITXOR					: '|' ; 
-BITSHIFTL				: '<<' ; 
-BITSHIFTR				: '>>' ; 
-BITSHIFTUR				: '>>>' ; 
-
-INCREMENT				: '++'	;
-DECREMENT				: '--'	;
+INCREMENT				: '++';
+DECREMENT				: '--';
 NOT						: '!' ;
 BITNOT					: '~' ;
 
-ASSIGN					: '='	;
+ASSIGN					: '=';
 
 NULL					: 'null' ;
 

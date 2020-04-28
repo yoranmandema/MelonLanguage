@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MelonLanguage.Native {
+﻿namespace MelonLanguage.Native {
     public abstract class MelonInstance : MelonObject {
         public MelonEngine Engine { get; private set; }
         public MelonType Type { get; }

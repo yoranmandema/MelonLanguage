@@ -1,6 +1,5 @@
-﻿using System;
+﻿using MelonLanguage.Native;
 using System.Collections.Generic;
-using System.Text;
 using System.Linq;
 
 namespace MelonLanguage.Compiling {
@@ -10,10 +9,13 @@ namespace MelonLanguage.Compiling {
         public List<LexicalEnvironment> Children { get; }
         public Dictionary<string, Variable> Variables { get; }
 
-        public LexicalEnvironment Root { get {
+        public LexicalEnvironment Root {
+            get {
                 LexicalEnvironment parent = Parent;
 
-                if (parent == null) return this;
+                if (parent == null) {
+                    return this;
+                }
 
                 while (parent.Parent != null) {
                     parent = parent.Parent;
@@ -25,13 +27,13 @@ namespace MelonLanguage.Compiling {
 
         private readonly MelonEngine _engine;
 
-        public LexicalEnvironment (MelonEngine engine) {
+        public LexicalEnvironment(MelonEngine engine) {
             _engine = engine;
             Variables = new Dictionary<string, Variable>();
             Children = new List<LexicalEnvironment>();
         }
 
-        public LexicalEnvironment (LexicalEnvironment parent) {
+        public LexicalEnvironment(LexicalEnvironment parent) {
             Parent = parent;
 
             Parent.AddChild(this);
@@ -41,7 +43,7 @@ namespace MelonLanguage.Compiling {
             Children = new List<LexicalEnvironment>();
         }
 
-        public int[] CreateLocals (out string[] names) {
+        public int[] CreateLocals(out string[] names) {
             var allVars = GetAllVariables();
             var localTypes = new int[allVars.Count];
             var localNames = new string[allVars.Count];
@@ -59,7 +61,7 @@ namespace MelonLanguage.Compiling {
             return localTypes;
         }
 
-        private List<Variable> GetAllVariables () {
+        private List<Variable> GetAllVariables() {
             var variables = new List<Variable>(Variables.Values);
 
             foreach (var child in Children) {
@@ -71,17 +73,26 @@ namespace MelonLanguage.Compiling {
             return variables;
         }
 
-        public void AddChild (LexicalEnvironment env) { 
+        public void AddChild(LexicalEnvironment env) {
             env.Parent = this;
             Children.Add(env);
         }
 
-        public Variable GetVariable (string name) {
+        public Variable GetVariable(string name) {
             if (Variables.ContainsKey(name)) {
                 return Variables[name];
-            } else {
+            }
+            else {
                 return Parent?.GetVariable(name);
             }
+        }
+
+        public Variable AddVariable (int id, string name, MelonType type) {
+            var variable = new Variable { id = id, name = name, type = type };
+
+            Variables[name] = variable;
+
+            return variable;
         }
     }
 }

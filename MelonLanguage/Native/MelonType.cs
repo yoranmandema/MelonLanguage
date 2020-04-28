@@ -1,14 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MelonLanguage.Native;
 
 namespace MelonLanguage.Native {
-    public abstract class MelonType {
-        public abstract string Name { get; }
+    public class MelonType : MelonObject {
+        public virtual string Name { get; } = "type";
         public MelonEngine Engine { get; private set; }
 
-        public MelonType (MelonEngine engine) {
+        public MelonType(MelonEngine engine) {
             Engine = engine;
+
+            var methods = GetType().GetMethods();
+
+            for (int i = 0; i < methods.Length; i++) {
+                var m = methods[i];
+
+                if (NativeFunction.TryCreateFunction(Engine, m, out NativeFunction function)) {
+                    Members.Add(m.Name, new MelonMember(m.Name, function));
+                }
+            }
         }
     }
 }

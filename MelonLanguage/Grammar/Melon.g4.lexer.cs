@@ -1,4 +1,4 @@
 ﻿namespace MelonLanguage.Grammar {
-    partial class MelonLexer {
+    public partial class MelonLexer {
     }
 }

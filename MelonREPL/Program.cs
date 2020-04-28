@@ -10,22 +10,23 @@ namespace MelonREPL {
         public static void Main(string[] args) {
             MelonEngine engine = new MelonEngine();
 
-            const int runs = (int)1e7;
+            const int runs = 100;
             string _file = "";
 
-            if (args.Any())
+            if (args.Any()) {
                 _file = Path.Combine(Directory.GetCurrentDirectory(), args[0]);
+            }
 
             if (!string.IsNullOrEmpty(_file)) {
 
                 string code = System.IO.File.ReadAllText(_file);
-                var context = engine.Parse(code);
+                var parseContext = engine.Parse(code);
 
-                var printer = new ByteCodePrinter(engine, context);
+                var context = engine.CreateContext(parseContext);
+                var printer = new ByteCodePrinter(engine, parseContext);
                 printer.Print();
 
-                Console.WriteLine("");
-                Console.WriteLine($"Result {engine.Execute(context).CompletionValue}");
+                Console.WriteLine();
                 Console.WriteLine($"Benchmarking {runs} times");
                 Stopwatch sw = Stopwatch.StartNew();
 

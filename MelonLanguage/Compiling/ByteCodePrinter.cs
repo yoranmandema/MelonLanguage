@@ -1,28 +1,27 @@
 ﻿using MelonLanguage.Runtime;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Linq;
 
 namespace MelonLanguage.Compiling {
     public class ByteCodePrinter {
 
         private readonly MelonEngine _engine;
         private readonly Context _context;
+        private readonly ParseContext _parseContext;
 
-        public ByteCodePrinter (MelonEngine engine, Context context) {
+        public ByteCodePrinter(MelonEngine engine, ParseContext parseContext) {
             _engine = engine;
-            _context = context;
+            _parseContext = parseContext;
+            _context = engine.CreateContext(parseContext);
         }
 
-        private double GetDecimalValue (int left, int right) {
+        private double GetDecimalValue(int left, int right) {
             long longVal = (long)left << 32 | (uint)right;
             var decimalVal = BitConverter.Int64BitsToDouble(longVal);
 
             return decimalVal;
         }
 
-        public void PrintHex () {
+        public void PrintHex() {
             //byte[] result = new byte[_instructions.Length * sizeof(int)];
             //Buffer.BlockCopy(_instructions, 0, result, 0, result.Length);
 
@@ -33,8 +32,7 @@ namespace MelonLanguage.Compiling {
             }
         }
 
-        public void Print () {
-            Console.WriteLine($"Instructions: {_context.Instructions.Length}");
+        public void Print() {
 
             Console.WriteLine("Locals {");
 
@@ -46,24 +44,25 @@ namespace MelonLanguage.Compiling {
 
             Console.WriteLine("}\n");
 
+            int line = 0;
+
             for (int instrNum = 0; _context.InstrCounter < _context.Instructions.Length; instrNum++) {
                 Console.Write($"MLN_{instrNum:x4}: ");
+
+                string instructionString = ((OpCode)_context.Instruction).ToString();
+                Console.Write(instructionString + " ");
 
                 switch (_context.Instruction) {
                     case (int)OpCode.LDBOOL:
                         _context.Next();
 
-                        Console.Write("LDBOOL ");
                         Console.Write(_context.Instruction == 1);
-                        Console.WriteLine();
 
                         break;
                     case (int)OpCode.LDINT:
                         _context.Next();
 
-                        Console.Write("LDINT ");
                         Console.Write(_context.Instruction);
-                        Console.WriteLine();
 
                         break;
                     case (int)OpCode.LDFLO:
@@ -75,41 +74,51 @@ namespace MelonLanguage.Compiling {
 
                         int right = _context.Instruction;
 
-                        Console.Write("LDDEC ");
                         Console.Write(GetDecimalValue(left, right).ToString("0.0##############################"));
-                        Console.WriteLine();
                         break;
                     case (int)OpCode.LDSTR:
                         _context.Next();
 
-                        Console.Write("LDSTR ");
                         Console.Write(_engine.Strings[_context.Instruction]);
-                        Console.WriteLine();
                         break;
                     case (int)OpCode.STLOC:
                         _context.Next();
 
-                        Console.Write("STLOC ");
                         Console.Write(_context.Instruction);
-                        Console.WriteLine();
                         break;
                     case (int)OpCode.LDLOC:
                         _context.Next();
 
-                        Console.Write("LDLOC ");
                         Console.Write(_context.Instruction);
-                        Console.WriteLine();
                         break;
-                    case (int)OpCode.ADD:
-                        Console.WriteLine("ADD");
+                    case (int)OpCode.LDTYP:
+                        _context.Next();
+
+                        Console.Write(_context.Instruction);
                         break;
-                    case (int)OpCode.MUL:
-                        Console.WriteLine("MUL");
+                    case (int)OpCode.GTMEM:
+                        _context.Next();
+
+                        Console.Write(_engine.Strings[_context.Instruction]);
+                        break;
+                    case (int)OpCode.BR:
+                    case (int)OpCode.BRTRUE:
+                        _context.Next();
+
+                        Console.Write($"MLN_{_parseContext.branchLines[_context.Instruction]:x4}");
                         break;
                 }
 
+                Console.WriteLine();
+
                 _context.Next();
+
+                line++;
             }
+
+            Console.WriteLine();
+
+            Console.WriteLine($"Instructions: {line}");
 
             _context.Reset();
         }

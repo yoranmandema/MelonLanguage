@@ -1,4 +1,5 @@
 ﻿namespace MelonLanguage.Compiling {
+    [System.Flags]
     public enum OpCode : int {
         ADD,
         SUB,
@@ -7,6 +8,10 @@
         MOD,
         EXP,
 
+        CLT,
+        CGT,
+        CEQ,
+
         LDSTR,
         LDINT,
         LDFLO,
@@ -14,5 +19,13 @@
 
         STLOC,
         LDLOC,
+        LDTYP,
+
+        GTMEM,
+
+        BR,
+        BRTRUE,
+
+        CALL
     }
 }

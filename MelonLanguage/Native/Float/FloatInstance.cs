@@ -1,8 +1,8 @@
 ﻿namespace MelonLanguage.Native {
-    public class FloatInstance : MelonObject {
+    public class FloatInstance : MelonInstance {
         public double value;
 
-        public FloatInstance(double val) {
+        public FloatInstance(MelonEngine engine, MelonType type, double val) : base(engine, type) {
             value = val;
         }
 

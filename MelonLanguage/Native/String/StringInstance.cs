@@ -1,8 +1,8 @@
 ﻿namespace MelonLanguage.Native {
-    public class StringInstance : MelonObject {
+    public class StringInstance : MelonInstance {
         public string value;
 
-        public StringInstance(string val) {
+        public StringInstance(MelonEngine engine, MelonType type, string val) : base(engine, type) {
             value = val;
         }
 

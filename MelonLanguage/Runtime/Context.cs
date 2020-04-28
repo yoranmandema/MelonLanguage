@@ -1,7 +1,5 @@
 ﻿using MelonLanguage.Native;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace MelonLanguage.Runtime {
     public class Context {
@@ -12,17 +10,14 @@ namespace MelonLanguage.Runtime {
 
         public int InstrCounter { get; private set; }
 
-        public int Instruction { get {
-                return _instructions[InstrCounter];
-            }
-        }
+        public int Instruction => _instructions[InstrCounter];
 
         public int[] Instructions => _instructions;
 
         private readonly int[] _instructions;
         public readonly Stack<MelonObject> _stack = new Stack<MelonObject>();
 
-        public Context (string[] localNames, int[] localTypes, int[] instructions) {
+        public Context(string[] localNames, int[] localTypes, int[] instructions) {
             _instructions = instructions;
             LocalNames = localNames;
             LocalTypes = localTypes;
@@ -30,20 +25,24 @@ namespace MelonLanguage.Runtime {
             LocalValues = new MelonObject[localTypes.Length];
         }
 
-        public void Reset () {
+        public void Reset() {
             InstrCounter = 0;
             _stack.Clear();
         }
 
-        public void Next () {
+        public void Goto(int instruction) {
+            InstrCounter = instruction;
+        }
+
+        public void Next() {
             InstrCounter++;
         }
 
-        public void Push (MelonObject value) {
+        public void Push(MelonObject value) {
             _stack.Push(value);
         }
 
-        public MelonObject Last () {
+        public MelonObject Last() {
             return _stack.Peek();
         }
 

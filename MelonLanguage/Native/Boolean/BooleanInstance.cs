@@ -1,8 +1,8 @@
 ﻿namespace MelonLanguage.Native {
-    public class BooleanInstance : MelonObject {
+    public class BooleanInstance : MelonInstance {
         public bool value;
 
-        public BooleanInstance(bool val) {
+        public BooleanInstance(MelonEngine engine, MelonType type, bool val) : base(engine, type) {
             value = val;
         }
 
