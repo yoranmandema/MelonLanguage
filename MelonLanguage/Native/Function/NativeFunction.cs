@@ -13,8 +13,8 @@ namespace MelonLanguage.Native {
             Delegate = del;
         }
 
-        public override MelonObject Run(MelonObject self, params MelonObject[] args) {
-            return Delegate.Invoke(Engine, self, new Arguments(args));
+        public override MelonObject Run(params MelonObject[] args) {
+            return Delegate.Invoke(Engine, Self, new Arguments(args));
         }
 
         public static bool TryCreateFunction (MelonEngine engine, MethodInfo method, out NativeFunction function) {

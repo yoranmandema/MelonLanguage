@@ -5,9 +5,12 @@
         public IntegerType(MelonEngine engine) : base(engine) {
         }
 
-        [MelonFunction]
         public IntegerInstance Construct(int value) {
             return new IntegerInstance(Engine, this, value);
+        }
+
+        public static MelonObject Constructor(MelonEngine engine, MelonObject self, Arguments arguments) {
+            return new IntegerInstance(engine, (IntegerType)self, arguments.GetAs<IntegerInstance>(0).value);
         }
 
         public static MelonObject Parse(MelonEngine engine, MelonObject self, Arguments arguments) {

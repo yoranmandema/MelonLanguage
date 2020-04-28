@@ -2,11 +2,13 @@
 using MelonLanguage.Native;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MelonLanguage.Runtime.Interpreter {
     public class MelonInterpreter {
         private readonly ExpressionSolver _expressionSolver;
         private readonly MelonEngine _engine;
+        private MelonObject accessed;
 
         public MelonInterpreter(MelonEngine engine) {
             _engine = engine;
@@ -146,32 +148,43 @@ namespace MelonLanguage.Runtime.Interpreter {
         private void GTMEM(Context context) {
             context.Next();
 
-            var value = context.Last();
+            var value = context.Pop();
 
             context.Push(value.Members[_engine.Strings[context.Instruction]].value);
+        }
+
+        private void CallFunction (Context context, FunctionInstance functionInstance) {
+            var arguments = new List<MelonObject>();
+
+            while (context._stack.Count > 0) {
+                arguments.Add(context.Pop());
+            }
+
+            var returnVal = functionInstance.Run(arguments.ToArray());
+
+            if (returnVal != null)
+                context.Push(returnVal);
+
+            context.Next();
         }
 
         private void CALL(Context context) {
             context.Next();
 
-            var value = context.Pop() as FunctionInstance;
+            var value = context.Pop();
 
             if (value is FunctionInstance functionInstance) {
-                var self = context.Pop();
-                var arguments = new List<MelonObject>();
-
-                while (context._stack.Count > 0) {
-                    arguments.Add(context.Pop());
+                CallFunction(context, functionInstance);
+            }
+            else if (value is MelonType melonType && melonType.Members.TryGetValue("Constructor", out MelonMember member)) {
+                if (member.value is FunctionInstance constructor) {
+                    CallFunction(context, constructor);
+                } else {
+                    throw new MelonException("Object is not a function or type");
                 }
-
-                var returnVal = functionInstance.Run(self, arguments.ToArray());
-
-                if (returnVal != null)
-                    context.Push(returnVal);
-
-                context.Next();
-            } else {
-                throw new MelonException("Object is not a function");
+            }
+            else {
+                throw new MelonException("Object is not a function or type");
             }
         }
 

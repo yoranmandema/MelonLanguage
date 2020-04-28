@@ -14,6 +14,8 @@ namespace MelonLanguage.Native {
                 var m = methods[i];
 
                 if (NativeFunction.TryCreateFunction(Engine, m, out NativeFunction function)) {
+                    function.Self = this;
+
                     Members.Add(m.Name, new MelonMember(m.Name, function));
                 }
             }
