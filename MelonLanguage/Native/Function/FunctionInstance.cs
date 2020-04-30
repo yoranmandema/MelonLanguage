@@ -6,10 +6,10 @@ namespace MelonLanguage.Native {
     public abstract class FunctionInstance : MelonInstance {
         public MelonObject Self { get; set; }
 
-        public FunctionInstance(MelonEngine engine, MelonType type) : base(engine, type) {
-
+        public FunctionInstance(MelonEngine engine) : base(engine) {
+            Type = engine.functionType;
         }
 
-        public abstract MelonObject Run(params MelonObject[] args);
+        public abstract MelonObject Run(MelonObject self, params MelonObject[] args);
     }
 }

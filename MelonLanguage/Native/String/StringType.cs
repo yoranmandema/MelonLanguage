@@ -3,11 +3,12 @@
         public override string Name { get; } = "string";
 
         public StringType(MelonEngine engine) : base(engine) {
+            Prototype = new StringPrototype(engine);
         }
 
         [MelonFunction]
         public StringInstance Construct(string value) {
-            return new StringInstance(Engine, this, value);
+            return new StringInstance(Engine, value);
         }
     }
 }

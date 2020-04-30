@@ -1,11 +1,17 @@
 ﻿namespace MelonLanguage.Native {
     public abstract class MelonInstance : MelonObject {
-        public MelonEngine Engine { get; private set; }
-        public MelonType Type { get; }
+        public MelonType Type { get; set; }
+        public MelonPrototype Prototype => Type.Prototype;
 
-        public MelonInstance(MelonEngine engine, MelonType type) {
-            Engine = engine;
-            Type = type;
+        public MelonInstance(MelonEngine engine) : base(engine) {
+        }
+
+        public override Property GetProperty(string name) {
+            if (Prototype.Properties.ContainsKey(name)) {
+                return Prototype.GetProperty(name);
+            } else {
+                return base.GetProperty(name);
+            }
         }
     }
 }

@@ -2,7 +2,9 @@
     public class StringInstance : MelonInstance {
         public string value;
 
-        public StringInstance(MelonEngine engine, MelonType type, string val) : base(engine, type) {
+        public StringInstance(MelonEngine engine, string val) : base(engine) {
+            Type = engine.stringType;
+
             value = val;
         }
 

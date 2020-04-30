@@ -5,23 +5,23 @@ using System.Text;
 
 namespace MelonLanguage.Native {
     public class NativeFunction : FunctionInstance {
-        public delegate MelonObject NativeFunctionDelegate(MelonEngine engine, MelonObject self, Arguments arguments);
+        public delegate MelonObject NativeFunctionDelegate(MelonObject self, Arguments arguments);
 
         public NativeFunctionDelegate Delegate { get; }
 
-        public NativeFunction(MelonEngine engine, MelonType type, NativeFunctionDelegate del) : base(engine, type) {
+        public NativeFunction(MelonEngine engine, NativeFunctionDelegate del) : base(engine) {
             Delegate = del;
         }
 
-        public override MelonObject Run(params MelonObject[] args) {
-            return Delegate.Invoke(Engine, Self, new Arguments(args));
+        public override MelonObject Run(MelonObject self, params MelonObject[] args) {
+            return Delegate.Invoke(self, new Arguments(args));
         }
 
         public static bool TryCreateFunction (MelonEngine engine, MethodInfo method, out NativeFunction function) {
             if (CheckSignature(method)) {
                 var del = (NativeFunctionDelegate)method.CreateDelegate(typeof(NativeFunctionDelegate));
 
-                function = new NativeFunction(engine, engine.functionType, del);
+                function = new NativeFunction(engine, del);
 
                 return true;
             }

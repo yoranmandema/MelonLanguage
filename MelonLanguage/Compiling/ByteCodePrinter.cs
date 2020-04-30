@@ -96,7 +96,7 @@ namespace MelonLanguage.Compiling {
 
                         Console.Write(_context.Instruction);
                         break;
-                    case (int)OpCode.GTMEM:
+                    case (int)OpCode.LDMEM:
                         _context.Next();
 
                         Console.Write(_engine.Strings[_context.Instruction]);

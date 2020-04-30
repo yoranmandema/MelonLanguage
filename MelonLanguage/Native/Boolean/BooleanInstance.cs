@@ -2,7 +2,9 @@
     public class BooleanInstance : MelonInstance {
         public bool value;
 
-        public BooleanInstance(MelonEngine engine, MelonType type, bool val) : base(engine, type) {
+        public BooleanInstance(MelonEngine engine, bool val) : base(engine) {
+            Type = engine.booleanType;
+
             value = val;
         }
 

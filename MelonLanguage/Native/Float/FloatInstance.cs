@@ -2,7 +2,9 @@
     public class FloatInstance : MelonInstance {
         public double value;
 
-        public FloatInstance(MelonEngine engine, MelonType type, double val) : base(engine, type) {
+        public FloatInstance(MelonEngine engine, double val) : base(engine) {
+            Type = engine.floatType;
+
             value = val;
         }
 

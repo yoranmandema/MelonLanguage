@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace MelonLanguage.Visitor {
-    public partial class MelonVisitor : MelonBaseVisitor<object> {
+    public partial class MelonVisitor : MelonBaseVisitor<ParseResult> {
 
         private int instructionline;
         private readonly MelonEngine _engine;
@@ -35,7 +35,7 @@ namespace MelonLanguage.Visitor {
             { OpCode.LDLOC, 1 },
             { OpCode.STLOC, 1 },
             { OpCode.LDTYP, 1 },
-            { OpCode.GTMEM, 1 },
+            { OpCode.LDMEM, 1 },
             { OpCode.BR, 1 },
             { OpCode.BRTRUE, 1 },
         };
@@ -55,14 +55,6 @@ namespace MelonLanguage.Visitor {
         public ParseContext Parse(MelonParser.ProgramContext context) {
             parseContext = new ParseContext(_engine);
 
-            //foreach (var kv in _engine.Types) {
-            //    parseContext.lexicalEnvironment.AddVariable(
-            //        kv.Key,
-            //        kv.Value.Name,
-            //        _engine.melonType
-            //    );
-            //}
-
             Visit(context);
 
             parseContext.lexicalEnvironment = parseContext.lexicalEnvironment.Root;
@@ -71,7 +63,7 @@ namespace MelonLanguage.Visitor {
             return parseContext;
         }
 
-        public override object VisitBlock(MelonParser.BlockContext context) {
+        public override ParseResult VisitBlock(MelonParser.BlockContext context) {
             var env = parseContext.lexicalEnvironment;
 
             parseContext.lexicalEnvironment = new LexicalEnvironment(env);
@@ -83,7 +75,7 @@ namespace MelonLanguage.Visitor {
             return DefaultResult;
         }
 
-        public override object VisitWhileStatement(MelonParser.WhileStatementContext context) {
+        public override ParseResult VisitWhileStatement(MelonParser.WhileStatementContext context) {
 
             parseContext.instructions.AddRange(new int[] { (int)OpCode.BR, 0 });
 
@@ -125,14 +117,18 @@ namespace MelonLanguage.Visitor {
             return new int[0];
         }
 
-        public override object VisitVariableDefinitionStatement(MelonParser.VariableDefinitionStatementContext context) {
-            Visit(context.expression());
+        public override ParseResult VisitVariableDefinitionStatement(MelonParser.VariableDefinitionStatementContext context) {
+            var expressionResult = Visit(context.expression());
 
             var typeName = context.name(0).value;
             var typeKv = _engine.Types.FirstOrDefault(x => x.Value.Name == typeName);
 
             if (typeKv.Value == null) {
                 throw new MelonException($"Could not find type '{typeName}'");
+            }
+
+            if (expressionResult.typeReference != typeKv.Key) {
+                throw new MelonException($"Variable of type '{typeName}' can't be assigned to '{_engine.GetType(expressionResult.typeReference).Name}'");
             }
 
             var name = context.name(1).value;
@@ -163,11 +159,15 @@ namespace MelonLanguage.Visitor {
             return DefaultResult;
         }
 
-        public override object VisitAssignStatement(MelonParser.AssignStatementContext context) {
-            Visit(context.expression());
+        public override ParseResult VisitAssignStatement(MelonParser.AssignStatementContext context) {
+            var expressionResult = Visit(context.expression());
 
             var name = context.name().value;
             var variable = parseContext.lexicalEnvironment.GetVariable(name);
+
+            if (_engine.GetType(expressionResult.typeReference) != variable.type) {
+                throw new MelonException($"Variable of type '{variable.type.Name}' can't be assigned to '{_engine.GetType(expressionResult.typeReference).Name}'");
+            }
 
             int id;
 
@@ -185,7 +185,7 @@ namespace MelonLanguage.Visitor {
             return DefaultResult;
         }
 
-        public override object VisitNameExp(MelonParser.NameExpContext context) {
+        public override ParseResult VisitNameExp(MelonParser.NameExpContext context) {
             var name = context.name().value;
             var variable = parseContext.lexicalEnvironment.GetVariable(name);
             var typeKv = _engine.Types.FirstOrDefault(t => t.Value.Name == name);
@@ -216,59 +216,78 @@ namespace MelonLanguage.Visitor {
             }
         }
 
-        public override object VisitMemberAccessExp(MelonParser.MemberAccessExpContext context) {
-            var subject = (ParseResult)Visit(context.expression());
+        public override ParseResult VisitMemberAccessExp(MelonParser.MemberAccessExpContext context) {
+            var left = Visit(context.expression());
+
+            Console.WriteLine(left);
+            Console.WriteLine(left.value);
+
             var memberName = context.name().GetText();
 
-            if (subject.value != null) {
-                var memberValue = subject.value.Members[memberName].value;
+            parseContext.instructions.Add((int)OpCode.LDMEM);
+            parseContext.instructions.Add(GetString(memberName));
 
-                Console.WriteLine(memberValue);
+            instructionline++;
 
-                parseContext.instructions.Add((int)OpCode.GTMEM);
-                parseContext.instructions.Add(GetString(memberName));
+            if (left.value != null) {
+                var memberValue = left.value.GetProperty(memberName).value;
 
                 return new ParseResult {
                     value = memberValue,
                     typeReference = GetTypeReference(memberValue)
                 };
             } else {
-                parseContext.instructions.Add((int)OpCode.GTMEM);
-                parseContext.instructions.Add(GetString(memberName));
-
                 return DefaultResult;
             }
         }
 
-        public override object VisitParenthesisExp(MelonParser.ParenthesisExpContext context) {
+        public override ParseResult VisitParenthesisExp(MelonParser.ParenthesisExpContext context) {
             return Visit(context.expression());
         }
 
-        public override object VisitCallExp(MelonParser.CallExpContext context) {
-            foreach (var expression in context.Arguments.expression()) {
-                Visit(expression);
-            }
-
+        public override ParseResult VisitCallExp(MelonParser.CallExpContext context) {
             var function = Visit(context.Function);
 
-            parseContext.instructions.Add((int)OpCode.CALL);
+            Console.WriteLine($"Function: {function}");
 
-            return DefaultResult;
+            foreach (var expression in context.Arguments.expression().Reverse()) {
+                Visit(expression);
+                parseContext.instructions.Add((int)OpCode.LDARG);
+                instructionline++;
+            }
+
+            parseContext.instructions.Add((int)OpCode.CALL);
+            instructionline++;
+
+            return new ParseResult {
+                typeReference = function.typeReference
+            };
         }
 
         private int GetTypeReference (MelonObject obj) {
             if (obj is MelonInstance melonInstance) {
                 return _engine.Types.KeyByValue(melonInstance.Type);
             } else if (obj is MelonType melonType) {
-                return _engine.Types.KeyByValue(_engine.melonType);
+                return _engine.Types.KeyByValue(melonType);
             } else {
                 return _engine.Types.KeyByValue(_engine.anyType);
             }
         }
 
-        public override object VisitBinaryOperationExp(MelonParser.BinaryOperationExpContext context) {
+        public override ParseResult VisitBinaryOperationExp(MelonParser.BinaryOperationExpContext context) {
             var left = Visit(context.Left);
             var right = Visit(context.Right);
+            var opCode = _opCodeText[context.Operation.Text];
+            var operatorName = MelonVisitor._opCodeText.FirstOrDefault(x => x.Value == opCode).Key;
+
+            var leftType = _engine.GetType(left.typeReference);
+            var rightType = _engine.GetType(right.typeReference);
+
+            var getOutComeType = _expressionSolver.GetTypeForOperation(opCode, leftType, rightType);
+
+            if (getOutComeType == null) {
+                throw new MelonException($"No such operation: '{leftType.Name}' {operatorName} '{rightType.Name}'.");
+            }
 
             if (left is ParseResult leftResult && right is ParseResult rightResult) {
                 if (leftResult.type == ParseResultTypes.Literal && rightResult.type == ParseResultTypes.Literal) {
@@ -286,7 +305,7 @@ namespace MelonLanguage.Visitor {
                     var result = _expressionSolver.Solve(_opCodeText[context.Operation.Text], leftResult.value, rightResult.value);
 
                     if (result is MelonErrorObject melonErrorObject) {
-                        throw new Exception(melonErrorObject.message);
+                        throw new MelonException($"No such operation: '{leftType.Name}' {operatorName} '{rightType.Name}'.");
                     }
 
                     parseContext.instructions.AddRange(GetInstructionsForLiteralValue(result));
@@ -303,8 +322,10 @@ namespace MelonLanguage.Visitor {
             parseContext.instructions.AddRange(GetInstructionsForOperation(context.Operation.Text, out int lineIncrease));
             instructionline += lineIncrease;
 
+            var typeReference = _engine.Types.FirstOrDefault(t => t.Value.GetType() == getOutComeType).Key;
+
             return new ParseResult {
-                typeReference = 0
+                typeReference = typeReference
             };
         }
 
@@ -351,7 +372,7 @@ namespace MelonLanguage.Visitor {
             instructionline++;
         }
 
-        public override object VisitStringLiteral(MelonParser.StringLiteralContext context) {
+        public override ParseResult VisitStringLiteral(MelonParser.StringLiteralContext context) {
             EmitLDSTR(context.@string().value);
 
             var value = _engine.CreateString(context.@string().value);
@@ -368,7 +389,7 @@ namespace MelonLanguage.Visitor {
             parseContext.instructions.Add(value ? 1 : 0);
         }
 
-        public override object VisitBooleanLiteral(MelonParser.BooleanLiteralContext context) {
+        public override ParseResult VisitBooleanLiteral(MelonParser.BooleanLiteralContext context) {
             EmitLDBOOL(context.boolean().value);
 
             var value = _engine.CreateBoolean(context.boolean().value);
@@ -386,7 +407,7 @@ namespace MelonLanguage.Visitor {
             instructionline++;
         }
 
-        public override object VisitIntegerLiteral(MelonParser.IntegerLiteralContext context) {
+        public override ParseResult VisitIntegerLiteral(MelonParser.IntegerLiteralContext context) {
             EmitLDINT(context.integer().value);
 
             var value = _engine.CreateInteger(context.integer().value);
@@ -411,7 +432,7 @@ namespace MelonLanguage.Visitor {
             instructionline++;
         }
 
-        public override object VisitFloatLiteral(MelonParser.FloatLiteralContext context) {
+        public override ParseResult VisitFloatLiteral(MelonParser.FloatLiteralContext context) {
             EmitLDDEC(context.@float().value);
 
             var value = _engine.CreateFloat(context.@float().value);

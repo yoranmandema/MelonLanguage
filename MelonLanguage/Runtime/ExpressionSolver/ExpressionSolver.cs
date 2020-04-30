@@ -1,6 +1,7 @@
 ﻿using MelonLanguage.Compiling;
 using MelonLanguage.Native;
 using MelonLanguage.Visitor;
+using System;
 using System.Linq;
 
 namespace MelonLanguage.Runtime {
@@ -11,10 +12,44 @@ namespace MelonLanguage.Runtime {
             _engine = engine;
         }
 
+        public Type GetTypeForOperation (OpCode op, MelonType left, MelonType right) {
+            return op switch
+            {
+                OpCode.ADD => (left, right) switch
+                {
+                    (IntegerType l, IntegerType r) => typeof(IntegerType),
+                    _ => null
+                },
+                OpCode.MUL => (left, right) switch
+                {
+                    (IntegerType l, IntegerType r) => typeof(IntegerType),
+                    _ => null
+                },
+                OpCode.CLT => (left, right) switch
+                {
+                    (IntegerType l, IntegerType r) => typeof(IntegerType),
+                    _ => null
+                },
+                OpCode.CEQ => (left, right) switch
+                {
+                    (IntegerType l, IntegerType r) => typeof(BooleanType),
+                    (BooleanType l, BooleanType r) => typeof(BooleanType),
+                    (StringType l, StringType r) => typeof(BooleanType),
+                    _ => null
+                },
+                OpCode.CGT => (left, right) switch
+                {
+                    (IntegerType l, IntegerType r) => typeof(BooleanType),
+                    (IntegerType l, FloatType r) => typeof(BooleanType),
+                    _ => null
+                },
+            };
+        }
+
         private MelonErrorObject ReturnError(OpCode op, MelonObject left, MelonObject right) {
             var operatorName = MelonVisitor._opCodeText.FirstOrDefault(x => x.Value == op).Key;
 
-            return new MelonErrorObject($"No such operation: {left.GetType().Name} {operatorName} {right.GetType().Name}.");
+            return new MelonErrorObject(_engine, $"No such operation: {left?.GetType().Name} {operatorName} {right?.GetType().Name}.");
         }
 
         public MelonObject Solve(OpCode op, MelonObject left, MelonObject right) {

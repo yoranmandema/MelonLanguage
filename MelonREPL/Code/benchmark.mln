@@ -1,2 +1,2 @@
 ﻿
-int a = int(3)
+int a = int.Parse()

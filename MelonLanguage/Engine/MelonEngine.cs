@@ -46,13 +46,13 @@ namespace MelonLanguage {
             Strings = new Dictionary<int, string>();
             Types = new Dictionary<int, MelonType>();
 
+            functionType = AddType(new FunctionType(this));
             anyType = AddType(new AnyType(this));
             melonType = AddType(new MelonType(this));
             integerType = AddType(new IntegerType(this));
             floatType = AddType(new FloatType(this));
             stringType = AddType(new StringType(this));
             booleanType = AddType(new BooleanType(this));
-            functionType = AddType(new FunctionType(this));
         }
 
         public T AddType<T>(T type) where T : MelonType {
@@ -66,6 +66,20 @@ namespace MelonLanguage {
             }
 
             return type;
+        }
+
+        public MelonType GetType (int id) {
+            return Types[id];
+        }
+
+        public int GetTypeID (MelonType type) {
+            var typeKV = Types.Values.FirstOrDefault(x => x == type);
+
+            if (typeKV == null) {
+                throw new MelonException("Type already exists!");
+            }
+
+            return Types.First(x => x.Value == type).Key;
         }
 
         public IntegerInstance CreateInteger(int value) {
@@ -98,10 +112,13 @@ namespace MelonLanguage {
         }
 
         public MelonEngine Execute(string text) {
-            var context = Parse(text);
+            var parseContext = Parse(text);
+            var context = CreateContext(parseContext);
             var interpreter = new MelonInterpreter(this);
 
-            CompletionValue = interpreter.Execute(CreateContext(context));
+            interpreter.Execute(context);
+
+            CompletionValue = interpreter.CompletionValue;
 
             return this;
         }
@@ -109,7 +126,9 @@ namespace MelonLanguage {
         public MelonEngine Execute(Context context) {
             var interpreter = new MelonInterpreter(this);
 
-            CompletionValue = interpreter.Execute(context);
+            interpreter.Execute(context);
+
+            CompletionValue = interpreter.CompletionValue;
 
             context.Reset();
 

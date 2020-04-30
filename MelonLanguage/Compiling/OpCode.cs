@@ -21,11 +21,12 @@
         LDLOC,
         LDTYP,
 
-        GTMEM,
+        LDMEM,
 
         BR,
         BRTRUE,
 
-        CALL
+        CALL,
+        LDARG,
     }
 }

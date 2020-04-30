@@ -2,7 +2,7 @@
     public class MelonErrorObject : MelonObject {
         public string message;
 
-        public MelonErrorObject(string msg) {
+        public MelonErrorObject(MelonEngine engine, string msg) : base(engine) {
             message = msg;
         }
     }

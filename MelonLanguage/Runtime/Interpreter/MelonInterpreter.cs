@@ -3,12 +3,14 @@ using MelonLanguage.Native;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Xml;
 
 namespace MelonLanguage.Runtime.Interpreter {
     public class MelonInterpreter {
         private readonly ExpressionSolver _expressionSolver;
         private readonly MelonEngine _engine;
-        private MelonObject accessed;
+
+        public MelonObject CompletionValue { get; private set; }
 
         public MelonInterpreter(MelonEngine engine) {
             _engine = engine;
@@ -16,56 +18,63 @@ namespace MelonLanguage.Runtime.Interpreter {
             _expressionSolver = new ExpressionSolver(engine);
         }
 
-        public MelonObject Execute(Context context) {
+        public int Execute(Context context) {
 
             while (context.InstrCounter < context.Instructions.Length) {
                 bool goNext = true;
 
-                switch (context.Instruction) {
-                    case (int)OpCode.LDBOOL:
+                switch ((OpCode)context.Instruction) {
+                    case OpCode.LDBOOL:
                         LoadBoolean(context);
                         break;
-                    case (int)OpCode.LDINT:
+                    case OpCode.LDINT:
                         LoadInteger(context);
                         break;
-                    case (int)OpCode.LDFLO:
+                    case OpCode.LDFLO:
                         LoadDecimal(context);
                         break;
-                    case (int)OpCode.LDSTR:
+                    case OpCode.LDSTR:
                         LoadString(context);
                         break;
-                    case (int)OpCode.ADD:
-                    case (int)OpCode.MUL:
-                    case (int)OpCode.CEQ:
-                    case (int)OpCode.CLT:
-                    case (int)OpCode.CGT:
+                    case OpCode.ADD:
+                    case OpCode.MUL:
+                    case OpCode.CEQ:
+                    case OpCode.CLT:
+                    case OpCode.CGT:
                         SolveOperation(context, (OpCode)context.Instruction);
                         break;
-                    case (int)OpCode.LDLOC:
+                    case OpCode.LDLOC:
                         LDLOC(context);
                         break;
-                    case (int)OpCode.STLOC:
+                    case OpCode.STLOC:
                         STLOC(context);
                         break;
-                    case (int)OpCode.LDTYP:
+                    case OpCode.LDTYP:
                         LDTYP(context);
                         break;
-                    case (int)OpCode.BR:
+                    case OpCode.BR:
                         BR(context);
                         goNext = false;
                         break;
-                    case (int)OpCode.BRTRUE:
+                    case OpCode.BRTRUE:
                         BRTRUE(context);
                         goNext = false;
                         break;
-                    case (int)OpCode.GTMEM:
-                        GTMEM(context);
+                    case OpCode.LDMEM:
+                        LDMEM(context);
                         break;
-                    case (int)OpCode.CALL:
+                    case OpCode.CALL:
                         CALL(context);
+                        break;
+                    case OpCode.LDARG:
+                        LDARG(context);
                         break;
                     default:
                         throw new MelonException($"Unknown instruction '{context.Instruction:X4}'");
+                }
+
+                if (context._stack.Count > 0) {
+                    CompletionValue = context.Last();
                 }
 
                 if (goNext) {
@@ -73,7 +82,7 @@ namespace MelonLanguage.Runtime.Interpreter {
                 }
             }
 
-            return context.Last();
+            return 0;
         }
         private void LoadString(Context context) {
             context.Next();
@@ -114,18 +123,10 @@ namespace MelonLanguage.Runtime.Interpreter {
             context.Push(_expressionSolver.Solve(opCode, left, right));
         }
 
-        private void AddOperation(Context context) {
-            context.Push(_expressionSolver.Add(context.Pop(), context.Pop()));
-        }
-
-        private void MulOperation(Context context) {
-            context.Push(_expressionSolver.Mul(context.Pop(), context.Pop()));
-        }
-
         private void STLOC(Context context) {
             context.Next();
 
-            context.LocalValues[context.Instruction] = context.Last();
+            context.LocalValues[context.Instruction] = context.Pop();
         }
 
         private void LDLOC(Context context) {
@@ -145,46 +146,48 @@ namespace MelonLanguage.Runtime.Interpreter {
             context.Goto(context.Instruction);
         }
 
-        private void GTMEM(Context context) {
+        private void LDMEM(Context context) {
             context.Next();
 
             var value = context.Pop();
 
-            context.Push(value.Members[_engine.Strings[context.Instruction]].value);
+            context.Push(value.Properties[_engine.Strings[context.Instruction]].value);
+        }
+
+        private void LDARG(Context context) {
+            context.Arguments.Push(context.Pop());
         }
 
         private void CallFunction (Context context, FunctionInstance functionInstance) {
             var arguments = new List<MelonObject>();
 
-            while (context._stack.Count > 0) {
-                arguments.Add(context.Pop());
+            while (context.Arguments.Count > 0) {
+                arguments.Add(context.Arguments.Pop());
             }
 
-            var returnVal = functionInstance.Run(arguments.ToArray());
+            MelonObject self = null;
+
+            if (context._stack.Count > 0) {
+                self = context.Pop();
+            }
+
+            var returnVal = functionInstance.Run(self, arguments.ToArray());
 
             if (returnVal != null)
                 context.Push(returnVal);
-
-            context.Next();
         }
 
         private void CALL(Context context) {
-            context.Next();
-
             var value = context.Pop();
 
             if (value is FunctionInstance functionInstance) {
                 CallFunction(context, functionInstance);
             }
-            else if (value is MelonType melonType && melonType.Members.TryGetValue("Constructor", out MelonMember member)) {
-                if (member.value is FunctionInstance constructor) {
-                    CallFunction(context, constructor);
-                } else {
-                    throw new MelonException("Object is not a function or type");
-                }
+            else if (value is MelonType melonType && melonType.Properties.TryGetValue("Constructor", out Property member) && member.value is FunctionInstance constructor) {
+                CallFunction(context, constructor);
             }
             else {
-                throw new MelonException("Object is not a function or type");
+                throw new MelonException("Object is not a function or type.");
             }
         }
 
@@ -196,6 +199,8 @@ namespace MelonLanguage.Runtime.Interpreter {
             if (value is BooleanInstance booleanInstance) {
                 if (booleanInstance.value) {
                     context.Goto(context.Instruction);
+                } else {
+                    context.Next();
                 }
             }
             else {

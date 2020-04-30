@@ -10,7 +10,7 @@ namespace MelonREPL {
         public static void Main(string[] args) {
             MelonEngine engine = new MelonEngine();
 
-            const int runs = 100;
+            const int runs = 1000000;
             string _file = "";
 
             if (args.Any()) {
@@ -37,6 +37,7 @@ namespace MelonREPL {
                 sw.Stop();
                 Console.WriteLine($"Done in {sw.Elapsed.TotalMilliseconds}ms, {sw.Elapsed.TotalMilliseconds / runs}ms average per run");
                 Console.WriteLine($"{1d / (sw.Elapsed.TotalSeconds / runs)} ops/s");
+                Console.WriteLine($"Completion value: {engine.CompletionValue}");
             }
 
             while (true) {

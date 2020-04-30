@@ -2,7 +2,7 @@
 using MelonLanguage.Native;
 
 namespace MelonLanguage.Visitor {
-    internal struct ParseResult {
+    public struct ParseResult {
         public MelonObject value;
         public int typeReference;
         public ParseResultTypes type;

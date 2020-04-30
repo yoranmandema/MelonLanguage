@@ -1,5 +1,7 @@
-﻿using MelonLanguage.Native;
+﻿using MelonLanguage.Compiling;
+using MelonLanguage.Native;
 using System.Collections.Generic;
+using System.Xml;
 
 namespace MelonLanguage.Runtime {
     public class Context {
@@ -7,6 +9,8 @@ namespace MelonLanguage.Runtime {
         public int[] LocalTypes { get; }
         public string[] LocalNames { get; }
         public MelonObject[] LocalValues { get; }
+
+        public Stack<MelonObject> Arguments { get; } = new Stack<MelonObject>();
 
         public int InstrCounter { get; private set; }
 
@@ -39,6 +43,10 @@ namespace MelonLanguage.Runtime {
         }
 
         public void Push(MelonObject value) {
+            if (value == null) {
+                throw new MelonException($"Invalid value 'null' was pushed to the stack!");
+            }
+
             _stack.Push(value);
         }
 
