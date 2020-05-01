@@ -1,5 +1,5 @@
 # MelonScript
 
-MelonScript is a simple to learn, light weight scripting language.
+MelonScript is an experimental, simple to learn, light weight scripting language.
 
  
