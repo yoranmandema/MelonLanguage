@@ -10,6 +10,13 @@ namespace MelonLanguage.Native {
         public NativeFunctionDelegate Delegate { get; }
 
         public NativeFunction(MelonEngine engine, NativeFunctionDelegate del) : base(engine) {
+            MelonFunctionAttribute functionAttribute = del.Method.GetCustomAttribute<MelonFunctionAttribute>();
+
+            if (functionAttribute != null) {
+                ReturnType = functionAttribute.ReturnType;
+                ParameterTypes = functionAttribute.ParameterTypes;
+            }
+
             Delegate = del;
         }
 

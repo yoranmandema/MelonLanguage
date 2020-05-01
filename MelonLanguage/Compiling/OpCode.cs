@@ -21,7 +21,7 @@
         LDLOC,
         LDTYP,
 
-        LDMEM,
+        LDPRP,
 
         BR,
         BRTRUE,

@@ -8,7 +8,6 @@ namespace MelonLanguage.Native {
             Prototype = new BooleanPrototype(engine);
         }
 
-        [MelonFunction]
         public BooleanInstance Construct(bool value) {
             return new BooleanInstance(Engine, value);
         }

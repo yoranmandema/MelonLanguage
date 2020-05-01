@@ -13,6 +13,10 @@ namespace MelonLanguage.Runtime {
         }
 
         public Type GetTypeForOperation (OpCode op, MelonType left, MelonType right) {
+            if (left is StringType || right is StringType) {
+                return typeof(StringType);
+            }
+
             return op switch
             {
                 OpCode.ADD => (left, right) switch
@@ -100,11 +104,15 @@ namespace MelonLanguage.Runtime {
         }
 
         public MelonObject Add(MelonObject left, MelonObject right) {
+
+            if (left is StringInstance lStr || right is StringInstance rStr) {
+                return _engine.CreateString(left.ToString() + right.ToString());
+            }
+
             MelonObject result = (left, right) switch
             {
                 (IntegerInstance l, IntegerInstance r) => _engine.CreateInteger(l.value + r.value),
                 (FloatInstance l, FloatInstance r) => _engine.CreateFloat(l.value + r.value),
-                (StringInstance l, StringInstance r) => _engine.CreateString(l.value + r.value),
                 _ => ReturnError(OpCode.ADD, left, right)
             };
 

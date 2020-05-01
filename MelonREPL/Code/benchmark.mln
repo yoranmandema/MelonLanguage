@@ -1,2 +1,8 @@
 ﻿
-int a = int.Parse()
+let str = ""
+
+while (str.Length() < 10000) {
+	str = str + "1"
+}
+
+let result = str.Length()

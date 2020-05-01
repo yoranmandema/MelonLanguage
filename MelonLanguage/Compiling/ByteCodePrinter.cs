@@ -96,7 +96,7 @@ namespace MelonLanguage.Compiling {
 
                         Console.Write(_context.Instruction);
                         break;
-                    case (int)OpCode.LDMEM:
+                    case (int)OpCode.LDPRP:
                         _context.Next();
 
                         Console.Write(_engine.Strings[_context.Instruction]);

@@ -6,7 +6,8 @@
             Prototype = new IntegerPrototype(engine);
 
             var properties = new PropertyDictionary() {
-                ["Parse"] = new Property(new NativeFunction(engine, Parse))
+                ["Parse"] = new Property(new NativeFunction(engine, Parse)),
+                ["Test"] = new Property(new NativeFunction(engine, Test))
             };
 
             SetProperties(properties);
@@ -20,7 +21,13 @@
             return new IntegerInstance(Engine, arguments.GetAs<IntegerInstance>(0).value);
         }
 
+        [MelonFunction(typeof(IntegerType), typeof(StringType))]
         public MelonObject Parse(MelonObject self, Arguments arguments) {
+            return Construct(int.Parse(arguments.GetAs<StringInstance>(0).value));
+        }
+
+        [MelonFunction(typeof(IntegerType))]
+        public MelonObject Test(MelonObject self, Arguments arguments) {
             return Construct(int.Parse(arguments.GetAs<StringInstance>(0).value));
         }
     }

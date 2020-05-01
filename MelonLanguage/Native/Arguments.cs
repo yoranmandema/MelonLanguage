@@ -32,7 +32,7 @@ namespace MelonLanguage.Native {
                 return value as T;
             }
             else {
-                throw new MelonException($"Expected argument of type {typeof(T).Name}.");
+                throw new MelonException($"Expected argument of type '{typeof(T).Name}'");
             }
         }
 

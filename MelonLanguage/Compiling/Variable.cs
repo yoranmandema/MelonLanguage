@@ -5,5 +5,6 @@ namespace MelonLanguage.Compiling {
         public int id;
         public string name;
         public MelonType type;
+        public MelonObject value;
     }
 }

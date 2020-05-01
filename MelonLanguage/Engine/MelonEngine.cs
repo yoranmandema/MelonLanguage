@@ -46,9 +46,9 @@ namespace MelonLanguage {
             Strings = new Dictionary<int, string>();
             Types = new Dictionary<int, MelonType>();
 
-            functionType = AddType(new FunctionType(this));
             anyType = AddType(new AnyType(this));
             melonType = AddType(new MelonType(this));
+            functionType = AddType(new FunctionType(this));
             integerType = AddType(new IntegerType(this));
             floatType = AddType(new FloatType(this));
             stringType = AddType(new StringType(this));
@@ -72,11 +72,21 @@ namespace MelonLanguage {
             return Types[id];
         }
 
+        public int GetTypeID (Type type) {
+            var typeKV = Types.Values.FirstOrDefault(x => x.GetType() == type);
+
+            if (typeKV == null) {
+                throw new MelonException($"Type '{type}' not present");
+            }
+
+            return Types.First(x => x.Value.GetType() == type).Key;
+        }
+
         public int GetTypeID (MelonType type) {
             var typeKV = Types.Values.FirstOrDefault(x => x == type);
 
             if (typeKV == null) {
-                throw new MelonException("Type already exists!");
+                throw new MelonException("Type already exists");
             }
 
             return Types.First(x => x.Value == type).Key;

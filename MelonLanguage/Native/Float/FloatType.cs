@@ -6,13 +6,8 @@
             Prototype = new FloatPrototype(engine);
         }
 
-        [MelonFunction]
         public FloatInstance Construct(double value) {
             return new FloatInstance(Engine, value);
-        }
-
-        public double Parse(MelonEngine engine, string str) {
-            return double.Parse(str);
         }
     }
 }

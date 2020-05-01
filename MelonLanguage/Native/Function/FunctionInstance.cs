@@ -5,6 +5,8 @@ using System.Text;
 namespace MelonLanguage.Native {
     public abstract class FunctionInstance : MelonInstance {
         public MelonObject Self { get; set; }
+        public Type ReturnType { get; set; }
+        public Type[] ParameterTypes { get; set; }
 
         public FunctionInstance(MelonEngine engine) : base(engine) {
             Type = engine.functionType;

@@ -29,7 +29,7 @@ namespace MelonLanguage.Native {
             if (Properties.ContainsKey(name)) {
                 return Properties[name];
             } else {
-                throw new MelonException($"Object does not contain member '{name}'");
+                throw new MelonException($"Object does not contain property '{name}'");
             }
         }
 

@@ -4,13 +4,13 @@ grammar Melon;
  * Parser Rules
  */
 program : block EOF ;
-block : ( variableDefinition | assignment | while )*;
+block : ( variableDefinition | assignment | while | expression)*;
  
 while : WHILE '(' expression ')' '{' block '}' 
 #whileStatement
 ;
 
-variableDefinition : name name ASSIGN expression 
+variableDefinition : (Type=name | LET) Name=name ASSIGN expression 
 #variableDefinitionStatement
 ;
 
@@ -94,6 +94,8 @@ DOT						: '.';
 COMMA					: ',';
 LEFTPARENTHESIS			: '(';
 RIGHTPARENTHESIS		: ')';
+
+LET						: 'let' ;
 
 IF						: 'if';
 ELSE					: 'else';

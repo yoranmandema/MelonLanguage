@@ -60,8 +60,8 @@ namespace MelonLanguage.Runtime.Interpreter {
                         BRTRUE(context);
                         goNext = false;
                         break;
-                    case OpCode.LDMEM:
-                        LDMEM(context);
+                    case OpCode.LDPRP:
+                        LDPRP(context);
                         break;
                     case OpCode.CALL:
                         CALL(context);
@@ -146,12 +146,12 @@ namespace MelonLanguage.Runtime.Interpreter {
             context.Goto(context.Instruction);
         }
 
-        private void LDMEM(Context context) {
+        private void LDPRP(Context context) {
             context.Next();
 
-            var value = context.Pop();
+            var value = context.Last();
 
-            context.Push(value.Properties[_engine.Strings[context.Instruction]].value);
+            context.Push(value.GetProperty(_engine.Strings[context.Instruction]).value);
         }
 
         private void LDARG(Context context) {

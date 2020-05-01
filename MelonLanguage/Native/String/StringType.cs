@@ -5,8 +5,6 @@
         public StringType(MelonEngine engine) : base(engine) {
             Prototype = new StringPrototype(engine);
         }
-
-        [MelonFunction]
         public StringInstance Construct(string value) {
             return new StringInstance(Engine, value);
         }
