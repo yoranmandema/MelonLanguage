@@ -4,11 +4,19 @@ grammar Melon;
  * Parser Rules
  */
 program : block EOF ;
-block : ( variableDefinition | assignment | while | expression)*;
+block : ( variableDefinition | functionDefinition | assignment | while  | expression)*;
  
-while : WHILE '(' expression ')' '{' block '}' 
+while : WHILE expression '{' block '}' 
 #whileStatement
 ;
+
+functionDefinition : FN (ReturnType=name)? Name=name '(' (Parameters=parameters)? ')' '{' Block=block '}' 
+#functionDefinitionStatement
+;
+
+parameters : parameter (',' parameter)* ;
+
+parameter : (Type=name)? Name=name ('=' Expression=expression)? ;
 
 variableDefinition : (Type=name | LET) Name=name ASSIGN expression 
 #variableDefinitionStatement
@@ -35,7 +43,7 @@ expression :
 	#binaryOperationExp
 	| Left=expression Operation=(LESS|LESSEQ|GREATER|GREATEREQ)	Right=expression			
 	#binaryOperationExp
-    | Left=expression Operation=(EQUAL|NOTEQUAL|IS)	Right=expression			
+    | Left=expression Operation=(EQUAL|NOTEQUAL)	Right=expression			
 	#binaryOperationExp
 	| name
 	#nameExp
@@ -96,6 +104,7 @@ LEFTPARENTHESIS			: '(';
 RIGHTPARENTHESIS		: ')';
 
 LET						: 'let' ;
+FN						: 'fn' ;
 
 IF						: 'if';
 ELSE					: 'else';

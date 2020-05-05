@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MelonLanguage {
 
@@ -10,7 +8,7 @@ namespace MelonLanguage {
 
         public Func<MelonEngine, object, object> Mapper { get; }
 
-        public TypeMapper (Type it, Type ot, Func<MelonEngine, object, object> mapper) {
+        public TypeMapper(Type it, Type ot, Func<MelonEngine, object, object> mapper) {
             InputType = it;
             OutputType = ot;
 

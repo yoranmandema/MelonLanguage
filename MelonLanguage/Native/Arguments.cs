@@ -1,7 +1,4 @@
 ﻿using MelonLanguage.Runtime;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace MelonLanguage.Native {
     public class Arguments {

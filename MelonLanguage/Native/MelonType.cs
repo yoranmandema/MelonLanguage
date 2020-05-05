@@ -1,6 +1,4 @@
-﻿using MelonLanguage.Native;
-
-namespace MelonLanguage.Native {
+﻿namespace MelonLanguage.Native {
     public class MelonType : MelonObject {
         public virtual string Name { get; } = "type";
         public MelonPrototype Prototype { get; internal set; }

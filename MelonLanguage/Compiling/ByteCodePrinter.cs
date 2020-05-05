@@ -1,17 +1,12 @@
-﻿using MelonLanguage.Runtime;
+﻿using MelonLanguage.Native;
 using System;
+using System.Text;
 
 namespace MelonLanguage.Compiling {
     public class ByteCodePrinter {
-
         private readonly MelonEngine _engine;
-        private readonly Context _context;
-        private readonly ParseContext _parseContext;
-
-        public ByteCodePrinter(MelonEngine engine, ParseContext parseContext) {
+        public ByteCodePrinter(MelonEngine engine) {
             _engine = engine;
-            _parseContext = parseContext;
-            _context = engine.CreateContext(parseContext);
         }
 
         private double GetDecimalValue(int left, int right) {
@@ -21,106 +16,120 @@ namespace MelonLanguage.Compiling {
             return decimalVal;
         }
 
-        public void PrintHex() {
-            //byte[] result = new byte[_instructions.Length * sizeof(int)];
-            //Buffer.BlockCopy(_instructions, 0, result, 0, result.Length);
+        //public void PrintHex() {
+        //    //byte[] result = new byte[_instructions.Length * sizeof(int)];
+        //    //Buffer.BlockCopy(_instructions, 0, result, 0, result.Length);
 
-            //Console.WriteLine(BitConverter.ToString(result).Replace("-", ""));
+        //    //Console.WriteLine(BitConverter.ToString(result).Replace("-", ""));
 
-            for (int i = 0; i < _context.Instructions.Length; i++) {
-                Console.WriteLine(_context.Instructions[i].ToString("X8"));
+        //    for (int i = 0; i < _context.Instructions.Length; i++) {
+        //        Console.WriteLine(_context.Instructions[i].ToString("X8"));
+        //    }
+        //}
+
+        public void Print(ParseContext parseContext, MelonObject parent = null) {
+            var context = _engine.CreateContext(parseContext);
+
+            foreach (var kv in parseContext.Variables) {
+                if (kv.Value.Variable.value is ScriptFunctionInstance scriptFunctionInstance && scriptFunctionInstance != parent) {
+                    var functionNameBuilder = new StringBuilder("fn ");
+                    if (scriptFunctionInstance.ReturnType != null) {
+                        functionNameBuilder.Append(scriptFunctionInstance.ReturnType).Append(' ');
+                    }
+
+                    functionNameBuilder.Append(scriptFunctionInstance.Name).Append(' ');
+                    functionNameBuilder.Append('(').Append(scriptFunctionInstance.ParameterTypes != null ? string.Join(",", (object[])scriptFunctionInstance.ParameterTypes) : "").Append(')');
+
+                    Console.WriteLine(functionNameBuilder.ToString());
+                    Print(scriptFunctionInstance.ParseContext, kv.Value.Variable.value);
+                }
             }
-        }
 
-        public void Print() {
+            Console.WriteLine("Variables {");
 
-            Console.WriteLine("Locals {");
+            foreach (var kv in parseContext.Variables) {
+                //var type = _engine.Types[context.LocalTypes[i]];
 
-            for (int i = 0; i < _context.LocalNames.Length; i++) {
-                var type = _engine.Types[_context.LocalTypes[i]];
-
-                Console.WriteLine($"\t{i}: {type.Name}");
+                Console.WriteLine($"\t{kv.Key}: ({kv.Value.Type}) {kv.Value.Variable.name}: {kv.Value.Variable.type.Name}");
             }
 
             Console.WriteLine("}\n");
 
             int line = 0;
 
-            for (int instrNum = 0; _context.InstrCounter < _context.Instructions.Length; instrNum++) {
+            for (int instrNum = 0; context.InstrCounter < context.Instructions.Length; instrNum++) {
                 Console.Write($"MLN_{instrNum:x4}: ");
 
-                string instructionString = ((OpCode)_context.Instruction).ToString();
+                string instructionString = ((OpCode)context.Instruction).ToString();
                 Console.Write(instructionString + " ");
 
-                switch (_context.Instruction) {
+                switch (context.Instruction) {
                     case (int)OpCode.LDBOOL:
-                        _context.Next();
+                        context.Next();
 
-                        Console.Write(_context.Instruction == 1);
+                        Console.Write(context.Instruction == 1);
 
                         break;
                     case (int)OpCode.LDINT:
-                        _context.Next();
+                        context.Next();
 
-                        Console.Write(_context.Instruction);
+                        Console.Write(context.Instruction);
 
                         break;
                     case (int)OpCode.LDFLO:
-                        _context.Next();
+                        context.Next();
 
-                        int left = _context.Instruction;
+                        int left = context.Instruction;
 
-                        _context.Next();
+                        context.Next();
 
-                        int right = _context.Instruction;
+                        int right = context.Instruction;
 
                         Console.Write(GetDecimalValue(left, right).ToString("0.0##############################"));
                         break;
                     case (int)OpCode.LDSTR:
-                        _context.Next();
+                        context.Next();
 
-                        Console.Write(_engine.Strings[_context.Instruction]);
+                        Console.Write(_engine.Strings[context.Instruction]);
                         break;
                     case (int)OpCode.STLOC:
-                        _context.Next();
+                        context.Next();
 
-                        Console.Write(_context.Instruction);
+                        Console.Write(context.Instruction);
                         break;
                     case (int)OpCode.LDLOC:
-                        _context.Next();
+                        context.Next();
 
-                        Console.Write(_context.Instruction);
+                        Console.Write(context.Instruction);
                         break;
                     case (int)OpCode.LDTYP:
-                        _context.Next();
+                        context.Next();
 
-                        Console.Write(_context.Instruction);
+                        Console.Write(context.Instruction);
                         break;
                     case (int)OpCode.LDPRP:
-                        _context.Next();
+                        context.Next();
 
-                        Console.Write(_engine.Strings[_context.Instruction]);
+                        Console.Write(_engine.Strings[context.Instruction]);
                         break;
                     case (int)OpCode.BR:
                     case (int)OpCode.BRTRUE:
-                        _context.Next();
+                        context.Next();
 
-                        Console.Write($"MLN_{_parseContext.branchLines[_context.Instruction]:x4}");
+                        Console.Write($"MLN_{parseContext.BranchLines[context.Instruction]:x4}");
                         break;
                 }
 
                 Console.WriteLine();
 
-                _context.Next();
+                context.Next();
 
                 line++;
             }
 
             Console.WriteLine();
 
-            Console.WriteLine($"Instructions: {line}");
-
-            _context.Reset();
+            context.Reset();
         }
     }
 }

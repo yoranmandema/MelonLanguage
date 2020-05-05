@@ -12,7 +12,7 @@ namespace MelonLanguage.Runtime {
             _engine = engine;
         }
 
-        public Type GetTypeForOperation (OpCode op, MelonType left, MelonType right) {
+        public Type GetTypeForOperation(OpCode op, MelonType left, MelonType right) {
             if (left is StringType || right is StringType) {
                 return typeof(StringType);
             }

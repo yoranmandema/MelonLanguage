@@ -9,7 +9,8 @@
         public override Property GetProperty(string name) {
             if (Prototype.Properties.ContainsKey(name)) {
                 return Prototype.GetProperty(name);
-            } else {
+            }
+            else {
                 return base.GetProperty(name);
             }
         }

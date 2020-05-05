@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace MelonLanguage.Compiling {
+﻿namespace MelonLanguage.Compiling {
     public enum ParseResultTypes {
-        None        = 0b_0000_0000,
-        Literal     = 0b_0000_0001,
-        Type        = 0b_0000_0010,
-        Local       = 0b_0000_0100,
-        Function    = 0b_0000_1000,
+        None = 0b_0000_0000,
+        Literal = 0b_0000_0001,
+        Type = 0b_0000_0010,
+        Local = 0b_0000_0100,
+        Function = 0b_0000_1000,
     }
 }

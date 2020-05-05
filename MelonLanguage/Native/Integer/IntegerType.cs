@@ -6,8 +6,8 @@
             Prototype = new IntegerPrototype(engine);
 
             var properties = new PropertyDictionary() {
-                ["Parse"] = new Property(new NativeFunction(engine, Parse)),
-                ["Test"] = new Property(new NativeFunction(engine, Test))
+                ["Parse"] = new Property(new NativeFunctionInstance("Parse", engine, Parse)),
+                ["Test"] = new Property(new NativeFunctionInstance("Test", engine, Test))
             };
 
             SetProperties(properties);

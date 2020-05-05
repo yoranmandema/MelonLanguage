@@ -1,5 +1,4 @@
 ﻿using MelonLanguage.Runtime;
-using System.Collections.Generic;
 
 namespace MelonLanguage.Native {
     public abstract class MelonObject {
@@ -7,17 +6,17 @@ namespace MelonLanguage.Native {
 
         public PropertyDictionary Properties { get; set; } = new PropertyDictionary();
 
-        public MelonObject (MelonEngine engine) {
+        public MelonObject(MelonEngine engine) {
             Engine = engine;
         }
 
-        public virtual void GenerateFunctions () {
+        public virtual void GenerateFunctions() {
             var methods = GetType().GetMethods();
 
             for (int i = 0; i < methods.Length; i++) {
                 var m = methods[i];
 
-                if (NativeFunction.TryCreateFunction(Engine, m, out NativeFunction function)) {
+                if (NativeFunctionInstance.TryCreateFunction(Engine, m, out NativeFunctionInstance function)) {
                     function.Self = this;
 
                     Properties.Add(m.Name, new Property(function));
@@ -25,15 +24,16 @@ namespace MelonLanguage.Native {
             }
         }
 
-        public virtual Property GetProperty (string name) {
+        public virtual Property GetProperty(string name) {
             if (Properties.ContainsKey(name)) {
                 return Properties[name];
-            } else {
+            }
+            else {
                 throw new MelonException($"Object does not contain property '{name}'");
             }
         }
 
-        public void SetProperties (PropertyDictionary properties) {
+        public void SetProperties(PropertyDictionary properties) {
             Properties = properties;
         }
     }

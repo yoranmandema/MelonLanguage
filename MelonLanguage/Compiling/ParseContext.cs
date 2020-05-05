@@ -1,22 +1,27 @@
-﻿using System.Collections.Generic;
+﻿using MelonLanguage.Extensions;
+using System.Collections.Generic;
 
 namespace MelonLanguage.Compiling {
     public class ParseContext {
         public List<int> instructions = new List<int>();
-        public List<int> locals = new List<int>();
-        public List<int> types = new List<int>();
-        public Dictionary<int, int> branchLines = new Dictionary<int, int>();
-        public LexicalEnvironment lexicalEnvironment;
-        public int[] LocalTypes { get; private set; }
-        public string[] LocalNames { get; private set; }
+        public Dictionary<int, VariableReference> Variables { get; } = new Dictionary<int, VariableReference>();
+        public Dictionary<int, int> BranchLines { get; } = new Dictionary<int, int>();
+        public LexicalEnvironment LexicalEnvironment { get; set; }
 
-        public ParseContext(MelonEngine engine) {
-            lexicalEnvironment = new LexicalEnvironment(engine);
+        public ParseContext(MelonEngine engine, LexicalEnvironment environment, bool isRoot) {
+            LexicalEnvironment = new LexicalEnvironment(environment, isRoot);
         }
 
-        public void PrepareLocals() {
-            LocalTypes = lexicalEnvironment.CreateLocals(out string[] localNames);
-            LocalNames = localNames;
+        public int AddVariableReference(Variable variable, VariableReferenceType type) {
+            var id = Variables.Count;
+
+            Variables[Variables.Count] = new VariableReference(variable, type);
+
+            return id;
+        }
+
+        public int GetVariableReference(VariableReference variableReference) {
+            return Variables.KeyByValue(variableReference);
         }
     }
 }

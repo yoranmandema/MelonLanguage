@@ -1,32 +1,25 @@
 ﻿using MelonLanguage.Compiling;
 using MelonLanguage.Native;
 using System.Collections.Generic;
-using System.Xml;
 
 namespace MelonLanguage.Runtime {
     public class Context {
-
-        public int[] LocalTypes { get; }
-        public string[] LocalNames { get; }
-        public MelonObject[] LocalValues { get; }
+        public LexicalEnvironment LexicalEnvironment { get; set; }
+        public Dictionary<int, VariableReference> Variables { get; } = new Dictionary<int, VariableReference>();
 
         public Stack<MelonObject> Arguments { get; } = new Stack<MelonObject>();
 
         public int InstrCounter { get; private set; }
 
-        public int Instruction => _instructions[InstrCounter];
+        public int Instruction => Instructions[InstrCounter];
 
-        public int[] Instructions => _instructions;
-
-        private readonly int[] _instructions;
+        public int[] Instructions { get; }
         public readonly Stack<MelonObject> _stack = new Stack<MelonObject>();
 
-        public Context(string[] localNames, int[] localTypes, int[] instructions) {
-            _instructions = instructions;
-            LocalNames = localNames;
-            LocalTypes = localTypes;
-
-            LocalValues = new MelonObject[localTypes.Length];
+        public Context(ParseContext parseContext) {
+            Instructions = parseContext.instructions.ToArray();
+            LexicalEnvironment = parseContext.LexicalEnvironment;
+            Variables = new Dictionary<int, VariableReference>(parseContext.Variables);
         }
 
         public void Reset() {

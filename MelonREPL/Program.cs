@@ -1,5 +1,6 @@
 ﻿using MelonLanguage;
 using MelonLanguage.Compiling;
+using MelonLanguage.Native;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -7,10 +8,19 @@ using System.Linq;
 
 namespace MelonREPL {
     public static class Program {
+
+        private static MelonObject print(MelonObject self, Arguments arguments) {
+            Console.WriteLine(string.Join(",", (object[])arguments.Values));
+
+            return null;
+        }
+
         public static void Main(string[] args) {
             MelonEngine engine = new MelonEngine();
 
-            const int runs = 1000;
+            engine.FastAdd("print", new NativeFunctionInstance("print", engine, print));
+
+            const int runs = 1;
             string _file = "";
 
             if (args.Any()) {
@@ -23,8 +33,8 @@ namespace MelonREPL {
                 var parseContext = engine.Parse(code);
 
                 var context = engine.CreateContext(parseContext);
-                var printer = new ByteCodePrinter(engine, parseContext);
-                printer.Print();
+                var printer = new ByteCodePrinter(engine);
+                printer.Print(parseContext);
 
                 engine.Execute(context);
 

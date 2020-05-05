@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace MelonLanguage.Native {
-    public class PropertyDictionary : Dictionary<string,Property> {
+    public class PropertyDictionary : Dictionary<string, Property> {
 
     }
 }

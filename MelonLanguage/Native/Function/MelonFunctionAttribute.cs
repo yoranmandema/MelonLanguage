@@ -6,7 +6,7 @@ namespace MelonLanguage.Native {
         public Type ReturnType;
         public Type[] ParameterTypes;
 
-        public MelonFunctionAttribute (Type returnType, params Type[] parameterTypes) {
+        public MelonFunctionAttribute(Type returnType, params Type[] parameterTypes) {
             ReturnType = returnType;
             ParameterTypes = parameterTypes;
         }

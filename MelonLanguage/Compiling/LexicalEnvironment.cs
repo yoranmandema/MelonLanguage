@@ -4,20 +4,20 @@ using System.Linq;
 
 namespace MelonLanguage.Compiling {
     public class LexicalEnvironment {
-
         public LexicalEnvironment Parent { get; private set; }
         public List<LexicalEnvironment> Children { get; }
-        public Dictionary<string, Variable> Variables { get; }
+        public Dictionary<string, Variable> Variables { get; } = new Dictionary<string, Variable>();
+        public bool IsRoot { get; }
 
         public LexicalEnvironment Root {
             get {
                 LexicalEnvironment parent = Parent;
 
-                if (parent == null) {
+                if (parent == null || IsRoot) {
                     return this;
                 }
 
-                while (parent.Parent != null) {
+                while (parent.Parent?.IsRoot == false) {
                     parent = parent.Parent;
                 }
 
@@ -27,26 +27,30 @@ namespace MelonLanguage.Compiling {
 
         private readonly MelonEngine _engine;
 
-        public LexicalEnvironment(MelonEngine engine) {
+        public LexicalEnvironment(MelonEngine engine, bool isRoot) {
+            IsRoot = isRoot;
+
             _engine = engine;
-            Variables = new Dictionary<string, Variable>();
+
             Children = new List<LexicalEnvironment>();
         }
 
-        public LexicalEnvironment(LexicalEnvironment parent) {
+        public LexicalEnvironment(LexicalEnvironment parent, bool isRoot) {
+            IsRoot = isRoot;
             Parent = parent;
 
             Parent.AddChild(this);
             _engine = Parent._engine;
 
-            Variables = new Dictionary<string, Variable>();
+            Variables = new Dictionary<string, Variable>(parent.Variables);
             Children = new List<LexicalEnvironment>();
         }
 
-        public int[] CreateLocals(out string[] names) {
+        public int[] CreateLocals(out string[] names, out MelonObject[] initialValues) {
             var allVars = GetAllVariables();
             var localTypes = new int[allVars.Count];
             var localNames = new string[allVars.Count];
+            var localValues = new MelonObject[allVars.Count];
 
             for (int i = 0; i < allVars.Count; i++) {
                 var variable = allVars[i];
@@ -54,9 +58,11 @@ namespace MelonLanguage.Compiling {
 
                 localTypes[i] = typeKv.Key;
                 localNames[i] = variable.name;
+                localValues[i] = variable.value;
             }
 
             names = localNames;
+            initialValues = localValues;
 
             return localTypes;
         }
@@ -68,7 +74,7 @@ namespace MelonLanguage.Compiling {
                 variables.AddRange(child.GetAllVariables());
             }
 
-            variables.Sort((a, b) => a.id - b.id);
+            variables.Sort((a, b) => a.name.CompareTo(b.name));
 
             return variables;
         }
@@ -87,8 +93,15 @@ namespace MelonLanguage.Compiling {
             }
         }
 
-        public Variable AddVariable (int id, string name, MelonType type) {
-            var variable = new Variable { id = id, name = name, type = type };
+        public Variable AddVariable(string name, MelonObject value, MelonType type) {
+            if (value is MelonInstance melonInstance) {
+                type = melonInstance.Type;
+            }
+            else if (value is MelonType melonType) {
+                type = melonType;
+            }
+
+            var variable = new Variable { name = name, type = type, value = value };
 
             Variables[name] = variable;
 

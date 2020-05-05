@@ -1,8 +1,17 @@
 ﻿
-let str = ""
 
-while (str.Length() < 10000) {
-	str = str + "1"
+
+
+let a = 0
+
+fn DoStuff () {
+	let increment = 1
+
+	a = a + increment
 }
 
-let result = str.Length()
+while a < 100 {
+	DoStuff()
+}
+
+print(a)

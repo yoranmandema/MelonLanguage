@@ -2,8 +2,6 @@
 using MelonLanguage.Native;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Xml;
 
 namespace MelonLanguage.Runtime.Interpreter {
     public class MelonInterpreter {
@@ -19,7 +17,6 @@ namespace MelonLanguage.Runtime.Interpreter {
         }
 
         public int Execute(Context context) {
-
             while (context.InstrCounter < context.Instructions.Length) {
                 bool goNext = true;
 
@@ -126,13 +123,13 @@ namespace MelonLanguage.Runtime.Interpreter {
         private void STLOC(Context context) {
             context.Next();
 
-            context.LocalValues[context.Instruction] = context.Pop();
+            context.Variables[context.Instruction].Variable.value = context.Pop();
         }
 
         private void LDLOC(Context context) {
             context.Next();
 
-            context.Push(context.LocalValues[context.Instruction]);
+            context.Push(context.Variables[context.Instruction].Variable.value);
         }
 
         private void LDTYP(Context context) {
@@ -158,7 +155,7 @@ namespace MelonLanguage.Runtime.Interpreter {
             context.Arguments.Push(context.Pop());
         }
 
-        private void CallFunction (Context context, FunctionInstance functionInstance) {
+        private void CallFunction(Context context, FunctionInstance functionInstance) {
             var arguments = new List<MelonObject>();
 
             while (context.Arguments.Count > 0) {
@@ -173,8 +170,9 @@ namespace MelonLanguage.Runtime.Interpreter {
 
             var returnVal = functionInstance.Run(self, arguments.ToArray());
 
-            if (returnVal != null)
+            if (returnVal != null) {
                 context.Push(returnVal);
+            }
         }
 
         private void CALL(Context context) {
@@ -199,7 +197,8 @@ namespace MelonLanguage.Runtime.Interpreter {
             if (value is BooleanInstance booleanInstance) {
                 if (booleanInstance.value) {
                     context.Goto(context.Instruction);
-                } else {
+                }
+                else {
                     context.Next();
                 }
             }

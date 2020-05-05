@@ -13,9 +13,11 @@ namespace MelonLanguage {
     public class MelonEngine {
         public MelonObject CompletionValue { get; private set; }
 
-        public Dictionary<int, string> Strings { get; private set; }
+        public Dictionary<int, string> Strings { get; }
 
-        public Dictionary<int, MelonType> Types { get; private set; }
+        public Dictionary<int, MelonType> Types { get; }
+
+        public LexicalEnvironment GlobalEnvironment { get; internal set; }
 
         internal readonly MelonType melonType;
         internal readonly AnyType anyType;
@@ -39,10 +41,10 @@ namespace MelonLanguage {
 
             new TypeMapper(typeof(bool), typeof(BooleanInstance), (e,i) => e.CreateBoolean((bool)i)),
             new TypeMapper(typeof(BooleanInstance), typeof(bool), (e,i) => ((BooleanInstance)i).value),
-
         };
 
         public MelonEngine() {
+            GlobalEnvironment = new LexicalEnvironment(this, true);
             Strings = new Dictionary<int, string>();
             Types = new Dictionary<int, MelonType>();
 
@@ -56,7 +58,7 @@ namespace MelonLanguage {
         }
 
         public T AddType<T>(T type) where T : MelonType {
-            var exists = Types.Values.FirstOrDefault(x => x.GetType() == type.GetType()) != null;
+            var exists = Types.Values.Any(x => x.GetType() == type.GetType());
 
             if (exists) {
                 throw new MelonException("Type already exists!");
@@ -68,11 +70,11 @@ namespace MelonLanguage {
             return type;
         }
 
-        public MelonType GetType (int id) {
+        public MelonType GetType(int id) {
             return Types[id];
         }
 
-        public int GetTypeID (Type type) {
+        public int GetTypeID(Type type) {
             var typeKV = Types.Values.FirstOrDefault(x => x.GetType() == type);
 
             if (typeKV == null) {
@@ -82,7 +84,7 @@ namespace MelonLanguage {
             return Types.First(x => x.Value.GetType() == type).Key;
         }
 
-        public int GetTypeID (MelonType type) {
+        public int GetTypeID(MelonType type) {
             var typeKV = Types.Values.FirstOrDefault(x => x == type);
 
             if (typeKV == null) {
@@ -92,12 +94,32 @@ namespace MelonLanguage {
             return Types.First(x => x.Value == type).Key;
         }
 
+        public MelonEngine FastAdd(string name, MelonObject value) {
+            GlobalEnvironment.AddVariable(name, value, GetTypeFromValue(value));
+
+            return this;
+        }
+
+        public MelonType GetTypeFromValue(MelonObject value) {
+            if (value is MelonInstance melonInstance) {
+                return melonInstance.Type;
+            }
+            else if (value is MelonType melonType) {
+                return melonType;
+            }
+            else {
+                return anyType;
+            }
+        }
+
         public IntegerInstance CreateInteger(int value) {
             return integerType.Construct(value);
         }
+
         public FloatInstance CreateFloat(double value) {
             return floatType.Construct(value);
         }
+
         public StringInstance CreateString(string value) {
             return stringType.Construct(value);
         }
@@ -114,11 +136,11 @@ namespace MelonLanguage {
             MelonParser.ProgramContext context = speakParser.program();
             MelonVisitor visitor = new MelonVisitor(this);
 
-            return visitor.Parse(context);
+            return visitor.Parse(context, GlobalEnvironment);
         }
 
         public Context CreateContext(ParseContext parseContext) {
-            return new Context(parseContext.LocalNames, parseContext.LocalTypes, parseContext.instructions.ToArray());
+            return new Context(parseContext);
         }
 
         public MelonEngine Execute(string text) {
