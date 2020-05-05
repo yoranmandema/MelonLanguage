@@ -319,6 +319,27 @@ namespace MelonLanguage.Visitor {
             string name = context.Name.GetText();
 
             LexicalEnvironment functionEnvironment = new LexicalEnvironment(parseContext.LexicalEnvironment, true);
+
+            for (var i = 0; i < context.Parameters.parameter().Length; i++) {
+                var parameter = context.Parameters.parameter(i);
+                MelonType type = _engine.anyType;
+
+                if (parameter.Type != null) {
+                    var typeName = parameter.Type.value;
+                    var typeKv = _engine.Types.FirstOrDefault(x => x.Value.Name == typeName);
+
+                    if (typeKv.Value == null) {
+                        throw new MelonException($"Could not find type '{typeName}'");
+                    }
+
+                    type = typeKv.Value;
+                }
+
+                functionEnvironment.AddVariable(parameter.Name.value, null, type);
+
+                Console.WriteLine(parameter);
+            }
+
             var variable = parseContext.LexicalEnvironment.AddVariable(name, null, _engine.functionType);
             parseContext.AddVariableReference(variable, VariableReferenceType.Local);
 
@@ -326,7 +347,29 @@ namespace MelonLanguage.Visitor {
             ParseContext functionParseContext = visitor.Parse(context.Block, functionEnvironment);
 
             var function = new ScriptFunctionInstance(name, _engine, functionEnvironment, functionParseContext);
+
+            if (context.ReturnType != null) {
+                var typeName = context.ReturnType.value;
+                var typeKv = _engine.Types.FirstOrDefault(x => x.Value.Name == typeName);
+
+                if (typeKv.Value == null) {
+                    throw new MelonException($"Could not find type '{typeName}'");
+                }
+
+                function.ReturnType = typeKv.Value.GetType();
+            }
+
             variable.value = function;
+
+            return DefaultResult;
+        }
+
+        public override ParseResult VisitReturnStatement(MelonParser.ReturnStatementContext context) {
+            if (context.Expression != null) {
+                var expressionResult = Visit(context.Expression);
+            }
+
+            parseContext.instructions.Add((int)OpCode.RET);
 
             return DefaultResult;
         }

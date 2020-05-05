@@ -28,5 +28,6 @@
 
         CALL,
         LDARG,
+        RET,
     }
 }

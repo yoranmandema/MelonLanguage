@@ -1,17 +1,4 @@
 ﻿
-
-
-
-let a = 0
-
-fn DoStuff () {
-	let increment = 1
-
-	a = a + increment
+fn Add(a, b) {
+	return a + b
 }
-
-while a < 100 {
-	DoStuff()
-}
-
-print(a)

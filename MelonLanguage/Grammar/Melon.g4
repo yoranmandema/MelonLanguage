@@ -18,6 +18,11 @@ parameters : parameter (',' parameter)* ;
 
 parameter : (Type=name)? Name=name ('=' Expression=expression)? ;
 
+return: RETURN Expression=expression?
+#returnStatement
+;
+
+
 variableDefinition : (Type=name | LET) Name=name ASSIGN expression 
 #variableDefinitionStatement
 ;
@@ -61,7 +66,7 @@ expression :
 
 name returns [string value] : NAME { 
 	$value = $NAME.text;
-} ;
+};
 
 string returns [string value] : STRING { 
 	if ($STRING.text.Length > 2) {
@@ -70,23 +75,23 @@ string returns [string value] : STRING {
 	} else {
 		$value = "";
 	}
-} ;
+};
 
 float returns [double value] : FLOAT { 
 	$value = double.Parse($FLOAT.text); 
-} ;
+};
 
 integer returns [int value] : INTEGER {
 	$value = int.Parse($INTEGER.text); 
-} ;
+};
 
 boolean returns [bool value] : BOOLEAN { 
 	$value = $BOOLEAN.text == "true" ? true : false; 
-} ;
+};
 
 null returns [object value] : NULL { 
 	$value = null; 
-} ;
+};
 
 /*
  * Lexer Rules
@@ -109,6 +114,8 @@ FN						: 'fn' ;
 IF						: 'if';
 ELSE					: 'else';
 WHILE					: 'while';
+
+RETURN					: 'return';
 
 LESS					: '<';
 LESSEQ					: '<=';
