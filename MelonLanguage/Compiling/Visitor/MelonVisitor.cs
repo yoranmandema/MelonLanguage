@@ -14,6 +14,7 @@ namespace MelonLanguage.Visitor {
         private readonly MelonEngine _engine;
         private readonly ExpressionSolver _expressionSolver;
         private ParseContext parseContext;
+        private readonly ScriptFunctionInstance _scriptFunction;
 
         internal static readonly Dictionary<string, OpCode> _opCodeText = new Dictionary<string, OpCode> {
             { "+", OpCode.ADD },
@@ -52,8 +53,19 @@ namespace MelonLanguage.Visitor {
             _expressionSolver = new ExpressionSolver(engine);
         }
 
+        public MelonVisitor(MelonEngine engine, ScriptFunctionInstance scriptFunction) : this(engine) {
+            _scriptFunction = scriptFunction;
+        }
+
         public ParseContext Parse(IParseTree context, LexicalEnvironment parentEnvironment) {
-            parseContext = new ParseContext(_engine, parentEnvironment, true);
+            parseContext = new ParseContext(_engine, parentEnvironment);
+
+            if (_scriptFunction != null) {
+                foreach (var kv in parentEnvironment.Variables) {
+                    parseContext.AddVariableReference(kv.Value, VariableReferenceType.Argument);
+                }
+            }
+
 
             Visit(context);
 
@@ -128,6 +140,10 @@ namespace MelonLanguage.Visitor {
                     throw new MelonException($"Could not find type '{typeName}'");
                 }
 
+                if (typeKv.Value == _engine.voidType) {
+                    throw new MelonException($"Cannot assign to void");
+                }
+
                 if (expressionResult.typeReference != typeKv.Key && typeKv.Key != 0) {
                     throw new MelonException($"Variable of type '{typeName}' can't be assigned to '{_engine.GetType(expressionResult.typeReference).Name}'");
                 }
@@ -137,6 +153,11 @@ namespace MelonLanguage.Visitor {
             }
             else {
                 type = _engine.GetType(expressionResult.typeReference);
+
+                if (type == _engine.voidType) {
+                    throw new MelonException($"Cannot assign to void");
+                }
+
                 typeReference = expressionResult.typeReference;
             }
 
@@ -320,33 +341,30 @@ namespace MelonLanguage.Visitor {
 
             LexicalEnvironment functionEnvironment = new LexicalEnvironment(parseContext.LexicalEnvironment, true);
 
-            for (var i = 0; i < context.Parameters.parameter().Length; i++) {
-                var parameter = context.Parameters.parameter(i);
-                MelonType type = _engine.anyType;
+            if (context.Parameters != null) {
+                for (var i = 0; i < context.Parameters.parameter().Length; i++) {
+                    var parameter = context.Parameters.parameter(i);
+                    MelonType type = _engine.anyType;
 
-                if (parameter.Type != null) {
-                    var typeName = parameter.Type.value;
-                    var typeKv = _engine.Types.FirstOrDefault(x => x.Value.Name == typeName);
+                    if (parameter.Type != null) {
+                        var typeName = parameter.Type.value;
+                        var typeKv = _engine.Types.FirstOrDefault(x => x.Value.Name == typeName);
 
-                    if (typeKv.Value == null) {
-                        throw new MelonException($"Could not find type '{typeName}'");
+                        if (typeKv.Value == null) {
+                            throw new MelonException($"Could not find type '{typeName}'");
+                        }
+
+                        type = typeKv.Value;
                     }
 
-                    type = typeKv.Value;
+                    functionEnvironment.AddVariable(parameter.Name.value, null, type);
                 }
-
-                functionEnvironment.AddVariable(parameter.Name.value, null, type);
-
-                Console.WriteLine(parameter);
             }
 
-            var variable = parseContext.LexicalEnvironment.AddVariable(name, null, _engine.functionType);
+            var function = new ScriptFunctionInstance(name, _engine);
+
+            var variable = parseContext.LexicalEnvironment.AddVariable(name, function, _engine.functionType);
             parseContext.AddVariableReference(variable, VariableReferenceType.Local);
-
-            MelonVisitor visitor = new MelonVisitor(_engine);
-            ParseContext functionParseContext = visitor.Parse(context.Block, functionEnvironment);
-
-            var function = new ScriptFunctionInstance(name, _engine, functionEnvironment, functionParseContext);
 
             if (context.ReturnType != null) {
                 var typeName = context.ReturnType.value;
@@ -359,14 +377,33 @@ namespace MelonLanguage.Visitor {
                 function.ReturnType = typeKv.Value.GetType();
             }
 
-            variable.value = function;
+            MelonVisitor visitor = new MelonVisitor(_engine, function);
+            ParseContext functionParseContext = visitor.Parse(context.Block, functionEnvironment);
+
+            function.SetContext(functionEnvironment, functionParseContext);
 
             return DefaultResult;
         }
 
         public override ParseResult VisitReturnStatement(MelonParser.ReturnStatementContext context) {
+            if (_scriptFunction == null) {
+                throw new MelonException("Return statement must be inside function");
+            }
+
             if (context.Expression != null) {
                 var expressionResult = Visit(context.Expression);
+
+                var typeKv = _engine.Types.FirstOrDefault(x => x.Value.GetType() == _scriptFunction.ReturnType);
+
+                if (_scriptFunction.ReturnType != typeof(AnyType)) {
+                    var isValidReturnType = typeKv.Value == _engine.Types[expressionResult.typeReference];
+
+                    if (!isValidReturnType) {
+                        throw new MelonException($"Expression must return value of type '{_scriptFunction.ReturnType}'");
+                    }
+                }
+            } else if (_scriptFunction.ReturnType != null && _scriptFunction.ReturnType != typeof(VoidType)) {
+                throw new MelonException($"Function with type return type must return value");
             }
 
             parseContext.instructions.Add((int)OpCode.RET);

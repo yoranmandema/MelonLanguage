@@ -20,7 +20,7 @@ namespace MelonREPL {
 
             engine.FastAdd("print", new NativeFunctionInstance("print", engine, print));
 
-            const int runs = 1;
+            const int runs = 10000;
             string _file = "";
 
             if (args.Any()) {

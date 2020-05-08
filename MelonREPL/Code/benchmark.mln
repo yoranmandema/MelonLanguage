@@ -1,4 +1,9 @@
 ﻿
-fn Add(a, b) {
-	return a + b
+fn PrintHello() {
+	return
 }
+
+
+let a = PrintHello()
+
+print(a)

@@ -1,5 +1,6 @@
 ﻿using MelonLanguage.Native;
 using System;
+using System.Linq;
 using System.Text;
 
 namespace MelonLanguage.Compiling {
@@ -38,7 +39,7 @@ namespace MelonLanguage.Compiling {
                     }
 
                     functionNameBuilder.Append(scriptFunctionInstance.Name).Append(' ');
-                    functionNameBuilder.Append('(').Append(scriptFunctionInstance.ParameterTypes != null ? string.Join(",", (object[])scriptFunctionInstance.ParameterTypes) : "").Append(')');
+                    functionNameBuilder.Append('(').Append(scriptFunctionInstance.ParameterTypes != null ? string.Join(",", (object[])scriptFunctionInstance.ParameterTypes.Select(x=>x.Name)) : "").Append(')');
 
                     Console.WriteLine(functionNameBuilder.ToString());
                     Print(scriptFunctionInstance.ParseContext, kv.Value.Variable.value);

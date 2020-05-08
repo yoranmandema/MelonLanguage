@@ -8,8 +8,8 @@ namespace MelonLanguage.Compiling {
         public Dictionary<int, int> BranchLines { get; } = new Dictionary<int, int>();
         public LexicalEnvironment LexicalEnvironment { get; set; }
 
-        public ParseContext(MelonEngine engine, LexicalEnvironment environment, bool isRoot) {
-            LexicalEnvironment = new LexicalEnvironment(environment, isRoot);
+        public ParseContext(MelonEngine engine, LexicalEnvironment environment) {
+            LexicalEnvironment = new LexicalEnvironment(environment, !environment.IsRoot);
         }
 
         public int AddVariableReference(Variable variable, VariableReferenceType type) {

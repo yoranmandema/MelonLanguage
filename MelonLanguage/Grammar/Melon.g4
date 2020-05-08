@@ -4,7 +4,7 @@ grammar Melon;
  * Parser Rules
  */
 program : block EOF ;
-block : ( variableDefinition | functionDefinition | assignment | while  | expression)*;
+block : ( variableDefinition | functionDefinition | assignment | while  | expression | return)*;
  
 while : WHILE expression '{' block '}' 
 #whileStatement

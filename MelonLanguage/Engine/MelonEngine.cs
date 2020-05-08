@@ -20,6 +20,7 @@ namespace MelonLanguage {
         public LexicalEnvironment GlobalEnvironment { get; internal set; }
 
         internal readonly MelonType melonType;
+        internal readonly VoidType voidType;
         internal readonly AnyType anyType;
         internal readonly IntegerType integerType;
         internal readonly FloatType floatType;
@@ -48,6 +49,7 @@ namespace MelonLanguage {
             Strings = new Dictionary<int, string>();
             Types = new Dictionary<int, MelonType>();
 
+            voidType = AddType(new VoidType(this));
             anyType = AddType(new AnyType(this));
             melonType = AddType(new MelonType(this));
             functionType = AddType(new FunctionType(this));

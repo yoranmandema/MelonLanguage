@@ -2,6 +2,7 @@
 using MelonLanguage.Native;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace MelonLanguage.Runtime.Interpreter {
     public class MelonInterpreter {
@@ -66,6 +67,9 @@ namespace MelonLanguage.Runtime.Interpreter {
                     case OpCode.LDARG:
                         LDARG(context);
                         break;
+                    case OpCode.RET:
+                        RET(context);
+                        break;
                     default:
                         throw new MelonException($"Unknown instruction '{context.Instruction:X4}'");
                 }
@@ -81,6 +85,8 @@ namespace MelonLanguage.Runtime.Interpreter {
 
             return 0;
         }
+
+
         private void LoadString(Context context) {
             context.Next();
 
@@ -187,6 +193,14 @@ namespace MelonLanguage.Runtime.Interpreter {
             else {
                 throw new MelonException("Object is not a function or type.");
             }
+        }
+
+        private void RET(Context context) {
+            if (context._stack.Count > 0) {
+                context.ReturnValue = context.Pop();
+            }
+
+            context.Finish();
         }
 
         private void BRTRUE(Context context) {

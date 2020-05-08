@@ -42,7 +42,7 @@ namespace MelonLanguage.Compiling {
             Parent.AddChild(this);
             _engine = Parent._engine;
 
-            Variables = new Dictionary<string, Variable>(parent.Variables);
+            Variables = new Dictionary<string, Variable>();
             Children = new List<LexicalEnvironment>();
         }
 
@@ -78,6 +78,21 @@ namespace MelonLanguage.Compiling {
 
             return variables;
         }
+
+        public List<string> GetAllParentVariables() {
+            var variables = new List<string>(Variables.Values.Select(x => x.name));
+            var parent = this.Parent;
+
+            while (parent != null) {
+                variables.AddRange(parent.Variables.Values.Select(x => x.name));
+                parent = parent.Parent;
+            }
+
+            variables.Sort((a, b) => a.CompareTo(b));
+
+            return variables;
+        }
+
 
         public void AddChild(LexicalEnvironment env) {
             env.Parent = this;

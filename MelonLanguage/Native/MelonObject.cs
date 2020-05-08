@@ -5,6 +5,7 @@ namespace MelonLanguage.Native {
         public MelonEngine Engine { get; private set; }
 
         public PropertyDictionary Properties { get; set; } = new PropertyDictionary();
+        public virtual bool IsAssignable => true;
 
         public MelonObject(MelonEngine engine) {
             Engine = engine;

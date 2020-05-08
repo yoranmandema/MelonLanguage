@@ -1,6 +1,7 @@
 ﻿namespace MelonLanguage.Compiling {
     public enum VariableReferenceType {
         Local,
-        Outer
+        Outer,
+        Argument
     }
 }
