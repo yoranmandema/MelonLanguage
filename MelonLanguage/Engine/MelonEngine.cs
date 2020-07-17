@@ -22,6 +22,7 @@ namespace MelonLanguage {
         internal readonly MelonType melonType;
         internal readonly VoidType voidType;
         internal readonly AnyType anyType;
+        internal readonly ArrayType arrayType;
         internal readonly IntegerType integerType;
         internal readonly FloatType floatType;
         internal readonly StringType stringType;
@@ -50,6 +51,7 @@ namespace MelonLanguage {
             Types = new Dictionary<int, MelonType>();
 
             voidType = AddType(new VoidType(this));
+            arrayType = AddType(new ArrayType(this));
             anyType = AddType(new AnyType(this));
             melonType = AddType(new MelonType(this));
             functionType = AddType(new FunctionType(this));
@@ -86,6 +88,7 @@ namespace MelonLanguage {
             return Types.First(x => x.Value.GetType() == type).Key;
         }
 
+
         public int GetTypeID(MelonType type) {
             var typeKV = Types.Values.FirstOrDefault(x => x == type);
 
@@ -97,7 +100,7 @@ namespace MelonLanguage {
         }
 
         public MelonEngine FastAdd(string name, MelonObject value) {
-            GlobalEnvironment.AddVariable(name, value, GetTypeFromValue(value));
+            GlobalEnvironment.AddVariable(name, value, new TypeReference(GetTypeFromValue(value)));
 
             return this;
         }
@@ -128,6 +131,10 @@ namespace MelonLanguage {
 
         public BooleanInstance CreateBoolean(bool value) {
             return booleanType.Construct(value);
+        }
+
+        internal ArrayInstance CreateArray(MelonObject[] values) {
+            return arrayType.Construct(values);
         }
 
         public ParseContext Parse(string text) {

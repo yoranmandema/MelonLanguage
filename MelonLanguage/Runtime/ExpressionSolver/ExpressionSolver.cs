@@ -104,7 +104,6 @@ namespace MelonLanguage.Runtime {
         }
 
         public MelonObject Add(MelonObject left, MelonObject right) {
-
             if (left is StringInstance lStr || right is StringInstance rStr) {
                 return _engine.CreateString(left.ToString() + right.ToString());
             }

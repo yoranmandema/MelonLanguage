@@ -1,8 +1,6 @@
 ﻿using MelonLanguage.Compiling;
 using MelonLanguage.Native;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace MelonLanguage.Runtime {
     public class Context {
@@ -37,12 +35,10 @@ namespace MelonLanguage.Runtime {
             }
         }
 
-        private Context () {
-
+        private Context() {
         }
 
-        public Context Clone () {
-
+        public Context Clone() {
             var variableReferences = new Dictionary<int, VariableReference>(this.Variables);
 
             foreach (var kv in variableReferences) {
@@ -67,7 +63,7 @@ namespace MelonLanguage.Runtime {
             _stack.Clear();
         }
 
-        public void Finish () {
+        public void Finish() {
             InstrCounter = Instructions.Length;
         }
 

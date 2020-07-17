@@ -21,4 +21,10 @@
       <Visitor>true</Visitor>
     </Antlr4>
   </ItemGroup>
+
+  <ItemGroup>
+    <Antlr4 Update="Grammar\Melon.g4">
+      <ForceAtn>false</ForceAtn>
+    </Antlr4>
+  </ItemGroup>
 </Project>

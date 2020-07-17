@@ -4,7 +4,7 @@ grammar Melon;
  * Parser Rules
  */
 program : block EOF ;
-block : ( variableDefinition | functionDefinition | assignment | while  | expression | return)*;
+block : ( variableDefinition | functionDefinition | assignment | computedMemberAssigment | while  | expression | return)*;
  
 while : WHILE expression '{' block '}' 
 #whileStatement
@@ -14,31 +14,40 @@ functionDefinition : FN (ReturnType=name)? Name=name '(' (Parameters=parameters)
 #functionDefinitionStatement
 ;
 
-parameters : parameter (',' parameter)* ;
+parameters: parameter (',' parameter)*;
 
-parameter : (Type=name)? Name=name ('=' Expression=expression)? ;
+parameter:  (Type=type)? VARARGS? Name=name ('=' Expression=expression)?;
 
 return: RETURN Expression=expression?
 #returnStatement
 ;
 
-
-variableDefinition : (Type=name | LET) Name=name ASSIGN expression 
+variableDefinition: (Type=type | LET) Name=name ASSIGN expression 
 #variableDefinitionStatement
 ;
+
+type: name genericParameters? ;
+
+genericParameters: '<' type (',' type)* '>' ;
 
 assignment : name ASSIGN expression 
 #assignStatement
 ;
 
-expressionGroup	: (expression (',' expression)*)?;
+computedMemberAssigment: name '[' Index=expression ']' ASSIGN Expression=expression 
+#computedMemberAssignStatement
+;
 
-expression : 
+expressionGroup: (expression (',' expression)*)?;
+
+expression: 
 	LEFTPARENTHESIS expression RIGHTPARENTHESIS 
 	#parenthesisExp
 	| expression DOT name
 	#memberAccessExp
-	| Function=expression LEFTPARENTHESIS Arguments=expressionGroup  RIGHTPARENTHESIS
+	| expression '[' expression ']'																				
+	#computedMemberAccessExp
+	| Function=expression genericParameters? LEFTPARENTHESIS Arguments=expressionGroup  RIGHTPARENTHESIS
 	#callExp
 	| <assoc=right>	Left=expression Operation=EXPONENT Right=expression	
 	#binaryOperationExp
@@ -50,6 +59,8 @@ expression :
 	#binaryOperationExp
     | Left=expression Operation=(EQUAL|NOTEQUAL)	Right=expression			
 	#binaryOperationExp
+	| array
+	#arrayLiteral
 	| name
 	#nameExp
 	| integer																									
@@ -63,6 +74,8 @@ expression :
 	| null																										
 	#nullLiteral
 ;
+
+array: '[' expressionGroup ']' ;
 
 name returns [string value] : NAME { 
 	$value = $NAME.text;
@@ -116,6 +129,7 @@ ELSE					: 'else';
 WHILE					: 'while';
 
 RETURN					: 'return';
+VARARGS					: '...';
 
 LESS					: '<';
 LESSEQ					: '<=';

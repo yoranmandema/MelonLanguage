@@ -37,5 +37,9 @@ namespace MelonLanguage.Native {
         public void SetProperties(PropertyDictionary properties) {
             Properties = properties;
         }
+
+        public override string ToString() {
+            return base.ToString();
+        }
     }
 }

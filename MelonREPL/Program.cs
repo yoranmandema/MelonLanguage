@@ -20,7 +20,7 @@ namespace MelonREPL {
 
             engine.FastAdd("print", new NativeFunctionInstance("print", engine, print));
 
-            const int runs = 10000;
+            const int runs = 1000000;
             string _file = "";
 
             if (args.Any()) {
@@ -37,6 +37,18 @@ namespace MelonREPL {
                 printer.Print(parseContext);
 
                 engine.Execute(context);
+
+                Console.WriteLine("Stack: ");
+
+                if (context._stack.Count > 0) {
+                    context._stack.ToArray().Select(x => {
+                        Console.WriteLine(x);
+                        return x;
+                    });
+                }
+                else {
+                    Console.WriteLine("Empty");
+                }
 
                 Console.WriteLine();
 

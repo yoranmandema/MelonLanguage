@@ -1,4 +1,7 @@
-﻿using System.Reflection;
+﻿using MelonLanguage.Native.Function;
+using MelonLanguage.Runtime;
+using System.Linq;
+using System.Reflection;
 
 namespace MelonLanguage.Native {
     public class NativeFunctionInstance : FunctionInstance {
@@ -7,11 +10,35 @@ namespace MelonLanguage.Native {
         public NativeFunctionDelegate Delegate { get; }
 
         public NativeFunctionInstance(string name, MelonEngine engine, NativeFunctionDelegate del) : base(name, engine) {
-            MelonFunctionAttribute functionAttribute = del.Method.GetCustomAttribute<MelonFunctionAttribute>();
+            ReturnTypeAttribute returnTypeAttribute = del.Method.GetCustomAttribute<ReturnTypeAttribute>();
 
-            if (functionAttribute != null) {
-                ReturnType = functionAttribute.ReturnType;
-                ParameterTypes = functionAttribute.ParameterTypes;
+            if (returnTypeAttribute != null) {
+                ReturnType = returnTypeAttribute.Type;
+            }
+
+            ParameterAttribute[] parameterAttributes = del.Method.GetCustomAttributes<ParameterAttribute>().ToArray();
+
+            if (parameterAttributes?.Length > 0) {
+                ParameterTypes = new FunctionParameter[parameterAttributes.Length];
+
+                bool hasVarargs = false;
+
+                for (int i = 0; i < parameterAttributes.Length; i++) {
+                    ParameterTypes[i] = new FunctionParameter(parameterAttributes[i].Name, parameterAttributes[i].Type);
+
+                    if (parameterAttributes[i].IsVarargs) {
+                        if (hasVarargs || i < parameterAttributes.Length - 1) {
+                            throw new MelonException("Varargs parameter can only appear once and has to be the last parameter");
+                        }
+
+                        ParameterTypes[i].IsVarargs = true;
+
+                        hasVarargs = true;
+                    }
+                }
+            }
+            else {
+                ParameterTypes = new[] { new FunctionParameter("", typeof(AnyType)) { IsVarargs = true } };
             }
 
             Delegate = del;

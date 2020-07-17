@@ -12,14 +12,17 @@
         CGT,
         CEQ,
 
+        LDTYP,
         LDSTR,
         LDINT,
         LDFLO,
         LDBOOL,
+        LDARR,
 
         STLOC,
         LDLOC,
-        LDTYP,
+        STELEM,
+        LDELEM,
 
         LDPRP,
 
@@ -29,5 +32,7 @@
         CALL,
         LDARG,
         RET,
+
+        DUP,
     }
 }

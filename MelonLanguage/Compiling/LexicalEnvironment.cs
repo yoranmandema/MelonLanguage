@@ -54,7 +54,7 @@ namespace MelonLanguage.Compiling {
 
             for (int i = 0; i < allVars.Count; i++) {
                 var variable = allVars[i];
-                var typeKv = _engine.Types.FirstOrDefault(x => x.Value == variable.type);
+                var typeKv = _engine.Types.FirstOrDefault(x => x.Value == variable.type.Type);
 
                 localTypes[i] = typeKv.Key;
                 localNames[i] = variable.name;
@@ -93,7 +93,6 @@ namespace MelonLanguage.Compiling {
             return variables;
         }
 
-
         public void AddChild(LexicalEnvironment env) {
             env.Parent = this;
             Children.Add(env);
@@ -108,13 +107,13 @@ namespace MelonLanguage.Compiling {
             }
         }
 
-        public Variable AddVariable(string name, MelonObject value, MelonType type) {
-            if (value is MelonInstance melonInstance) {
-                type = melonInstance.Type;
-            }
-            else if (value is MelonType melonType) {
-                type = melonType;
-            }
+        public Variable AddVariable(string name, MelonObject value, TypeReference type) {
+            //if (value is MelonInstance melonInstance) {
+            //    type = melonInstance.Type;
+            //}
+            //else if (value is MelonType melonType) {
+            //    type = melonType;
+            //}
 
             var variable = new Variable { name = name, type = type, value = value };
 

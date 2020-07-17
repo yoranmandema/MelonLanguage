@@ -1,8 +1,9 @@
 ﻿using MelonLanguage.Native.Function;
 
 namespace MelonLanguage.Native {
-    public class StringPrototype : MelonPrototype {
-        public StringPrototype(MelonEngine engine) : base(engine) {
+    public class ArrayPrototype : MelonPrototype {
+
+        public ArrayPrototype(MelonEngine engine) : base(engine) {
             var properties = new PropertyDictionary {
                 ["Length"] = new Property(new NativeFunctionInstance("Length", engine, Length))
             };
@@ -12,7 +13,7 @@ namespace MelonLanguage.Native {
 
         [ReturnType(typeof(IntegerType))]
         public MelonObject Length(MelonObject self, Arguments arguments) {
-            return Engine.CreateInteger((self as StringInstance).value.Length);
+            return Engine.CreateInteger((self as ArrayInstance).values.Count);
         }
     }
 }

@@ -66,7 +66,6 @@ namespace MelonLanguage.Visitor {
                 }
             }
 
-
             Visit(context);
 
             parseContext.LexicalEnvironment = parseContext.LexicalEnvironment.Root;
@@ -123,17 +122,48 @@ namespace MelonLanguage.Visitor {
                     (int)OpCode.LDFLO, left, right
                 };
             }
+            else if (value is StringInstance stringInstance) {
+                return new int[] {
+                    (int)OpCode.LDSTR, GetString(stringInstance.value)
+                };
+            }
+            else if (value is BooleanInstance booleanInstance) {
+                return new int[] {
+                    (int)OpCode.LDBOOL, booleanInstance.value ? 1 : 0
+                };
+            }
 
-            return new int[0];
+            throw new NotImplementedException($"Literal instructions not implemented for {value.GetType()}");
+
+            //return new int[0];
+        }
+
+        private TypeReference CreateTypeReference (MelonParser.TypeContext typeContext) {
+            var type = _engine.Types.FirstOrDefault(x => x.Value.Name == typeContext.name().value).Value;
+
+            TypeReference typeReference = new TypeReference(type);
+
+            if (typeContext.genericParameters()?.type() != null) {
+                typeReference.GenericTypes = new TypeReference[typeContext.genericParameters().type().Length];
+
+                for (int i = 0; i < typeContext.genericParameters().type().Length; i++) {
+                    if (typeContext.genericParameters().type(i) != null) {
+                        typeReference.GenericTypes[i] = CreateTypeReference(typeContext.genericParameters().type(i));
+                    }
+                }
+            }
+
+            return typeReference;
         }
 
         public override ParseResult VisitVariableDefinitionStatement(MelonParser.VariableDefinitionStatementContext context) {
             var expressionResult = Visit(context.expression());
             MelonType type;
-            int typeReference;
+            int typeId;
+            TypeReference typeReference = null;
 
             if (context.Type != null) {
-                var typeName = context.Type.value;
+                var typeName = context.Type.name().value;
                 var typeKv = _engine.Types.FirstOrDefault(x => x.Value.Name == typeName);
 
                 if (typeKv.Value == null) {
@@ -148,17 +178,20 @@ namespace MelonLanguage.Visitor {
                     throw new MelonException($"Variable of type '{typeName}' can't be assigned to '{_engine.GetType(expressionResult.typeReference).Name}'");
                 }
 
+                typeReference = CreateTypeReference(context.Type);
+
                 type = typeKv.Value;
-                typeReference = typeKv.Key;
+                typeId = typeKv.Key;
             }
             else {
                 type = _engine.GetType(expressionResult.typeReference);
+                typeReference = new TypeReference(type);
 
                 if (type == _engine.voidType) {
                     throw new MelonException($"Cannot assign to void");
                 }
 
-                typeReference = expressionResult.typeReference;
+                typeId = expressionResult.typeReference;
             }
 
             var name = context.Name.value;
@@ -170,7 +203,7 @@ namespace MelonLanguage.Visitor {
                 throw new MelonException($"Variable '{name}' already defined.");
             }
             else {
-                variable = parseContext.LexicalEnvironment.AddVariable(name, expressionResult.value, type);
+                variable = parseContext.LexicalEnvironment.AddVariable(name, expressionResult.value, typeReference);
 
                 id = parseContext.AddVariableReference(variable, VariableReferenceType.Local);
             }
@@ -189,8 +222,8 @@ namespace MelonLanguage.Visitor {
             var variable = parseContext.LexicalEnvironment.GetVariable(name);
             var variableReference = parseContext.Variables.First(x => x.Value.Variable == variable).Value;
 
-            if (_engine.GetType(expressionResult.typeReference) != variable.type) {
-                throw new MelonException($"Variable of type '{variable.type.Name}' can't be assigned to '{_engine.GetType(expressionResult.typeReference).Name}'");
+            if (_engine.GetType(expressionResult.typeReference) != variable.type.Type) {
+                throw new MelonException($"Variable of type '{variable.type.Type.Name}' can't be assigned to '{_engine.GetType(expressionResult.typeReference).Name}'");
             }
 
             int id;
@@ -233,7 +266,7 @@ namespace MelonLanguage.Visitor {
                 return new ParseResult {
                     value = variable.value,
                     type = ParseResultTypes.Local,
-                    typeReference = GetTypeReference(variable.type)
+                    typeReference = GetTypeReference(variable.type.Type)
                 };
             }
             else if (typeKv.Value != null) {
@@ -309,7 +342,7 @@ namespace MelonLanguage.Visitor {
 
             var args = context.Arguments.expression().Reverse().ToArray();
 
-            if (function.ParameterTypes != null && function.ParameterTypes.Length != args.Length) {
+            if (function.ParameterTypes?.Length != args.Length && !function.ParameterTypes.Last().IsVarargs) {
                 throw new MelonException($"Argument count mismatch");
             }
 
@@ -318,10 +351,10 @@ namespace MelonLanguage.Visitor {
                 parseContext.instructions.Add((int)OpCode.LDARG);
                 instructionline++;
 
-                if (function.ParameterTypes != null && _engine.GetTypeID(function.ParameterTypes[i]) != 0) {
-                    var parameterType = _engine.GetTypeID(function.ParameterTypes[i]);
+                if (i < function.ParameterTypes?.Length - 1 && _engine.GetTypeID(function.ParameterTypes[i].Type) != 0) {
+                    var parameterType = _engine.GetTypeID(function.ParameterTypes[i].Type);
 
-                    if (parameterType != expressionResult.typeReference) {
+                    if (parameterType != expressionResult.typeReference && _engine.GetType(parameterType) != _engine.anyType) {
                         var realType = _engine.GetType(parameterType);
                         throw new MelonException($"Expected argument of type '{realType.Name}'");
                     }
@@ -341,13 +374,22 @@ namespace MelonLanguage.Visitor {
 
             LexicalEnvironment functionEnvironment = new LexicalEnvironment(parseContext.LexicalEnvironment, true);
 
+            var functionParameters = new List<FunctionParameter>();
+
             if (context.Parameters != null) {
                 for (var i = 0; i < context.Parameters.parameter().Length; i++) {
                     var parameter = context.Parameters.parameter(i);
+
+                    bool isVarargs = parameter.VARARGS() != null;
+
+                    if (isVarargs && i < context.Parameters.parameter().Length - 1) {
+                        throw new MelonException("Varargs parameter can only appear once and has to be the last parameter");
+                    }
+
                     MelonType type = _engine.anyType;
 
                     if (parameter.Type != null) {
-                        var typeName = parameter.Type.value;
+                        var typeName = parameter.Type.name().value;
                         var typeKv = _engine.Types.FirstOrDefault(x => x.Value.Name == typeName);
 
                         if (typeKv.Value == null) {
@@ -357,13 +399,16 @@ namespace MelonLanguage.Visitor {
                         type = typeKv.Value;
                     }
 
-                    functionEnvironment.AddVariable(parameter.Name.value, null, type);
+                    functionEnvironment.AddVariable(parameter.Name.value, null, new TypeReference(type));
+                    functionParameters.Add(new FunctionParameter(parameter.Name.value, type.GetType(), isVarargs));
                 }
             }
 
-            var function = new ScriptFunctionInstance(name, _engine);
+            var function = new ScriptFunctionInstance(name, _engine) {
+                ParameterTypes = functionParameters.ToArray()
+            };
 
-            var variable = parseContext.LexicalEnvironment.AddVariable(name, function, _engine.functionType);
+            var variable = parseContext.LexicalEnvironment.AddVariable(name, function, new TypeReference(_engine.functionType));
             parseContext.AddVariableReference(variable, VariableReferenceType.Local);
 
             if (context.ReturnType != null) {
@@ -393,17 +438,16 @@ namespace MelonLanguage.Visitor {
             if (context.Expression != null) {
                 var expressionResult = Visit(context.Expression);
 
-                var typeKv = _engine.Types.FirstOrDefault(x => x.Value.GetType() == _scriptFunction.ReturnType);
-
-                if (_scriptFunction.ReturnType != typeof(AnyType)) {
-                    var isValidReturnType = typeKv.Value == _engine.Types[expressionResult.typeReference];
+                if (_scriptFunction.ReturnType.GetType() != typeof(AnyType)) {
+                    var isValidReturnType = _scriptFunction.ReturnType == _engine.Types[expressionResult.typeReference].GetType();
 
                     if (!isValidReturnType) {
                         throw new MelonException($"Expression must return value of type '{_scriptFunction.ReturnType}'");
                     }
                 }
-            } else if (_scriptFunction.ReturnType != null && _scriptFunction.ReturnType != typeof(VoidType)) {
-                throw new MelonException($"Function with type return type must return value");
+            }
+            else if (_scriptFunction.ReturnType != null && _scriptFunction.ReturnType.GetType() != typeof(VoidType)) {
+                throw new MelonException($"Function with return type must return a value");
             }
 
             parseContext.instructions.Add((int)OpCode.RET);
@@ -476,6 +520,70 @@ namespace MelonLanguage.Visitor {
             return new ParseResult {
                 typeReference = typeReference
             };
+        }
+
+        public override ParseResult VisitArrayLiteral(MelonParser.ArrayLiteralContext context) {
+            parseContext.instructions.Add((int)OpCode.LDARR);
+            instructionline++;
+
+            for (int i = 0; i < context.array().expressionGroup().expression()?.Length; i++) {
+                parseContext.instructions.Add((int)OpCode.DUP);
+                instructionline++;
+
+                var expressionResult = Visit(context.array().expressionGroup().expression(i));
+
+                EmitLDINT(i);
+
+                parseContext.instructions.Add((int)OpCode.STELEM);
+                instructionline++;
+            }
+
+            return new ParseResult {
+                typeReference = GetTypeReference(_engine.arrayType)
+            };
+        }
+
+        public override ParseResult VisitComputedMemberAccessExp(MelonParser.ComputedMemberAccessExpContext context) {
+            var subjectResult = Visit(context.expression(0));
+            var indexResult = Visit(context.expression(1));
+
+            parseContext.instructions.Add((int)OpCode.LDELEM);
+            instructionline++;
+
+            return new ParseResult {
+                typeReference = GetTypeReference(_engine.anyType)
+            };
+        }
+
+        public override ParseResult VisitComputedMemberAssignStatement(MelonParser.ComputedMemberAssignStatementContext context) {
+            var name = context.name().value;
+            var variable = parseContext.LexicalEnvironment.GetVariable(name);
+            var variableReference = parseContext.Variables.First(x => x.Value.Variable == variable).Value;
+
+            //if (_engine.GetType(expressionResult.typeReference) != variable.type) {
+            //    throw new MelonException($"Variable of type '{variable.type.Name}' can't be assigned to '{_engine.GetType(expressionResult.typeReference).Name}'");
+            //}
+
+            int id;
+
+            if (variable != null) {
+                id = parseContext.GetVariableReference(variableReference);
+            }
+            else {
+                throw new MelonException($"Could not find variable '{name}'");
+            }
+
+            parseContext.instructions.Add((int)OpCode.LDLOC);
+            parseContext.instructions.Add(id);
+            instructionline++;
+
+            var expressionResult = Visit(context.Expression);
+            var indexResult = Visit(context.Index);
+
+            parseContext.instructions.Add((int)OpCode.STELEM);
+            instructionline++;
+
+            return DefaultResult;
         }
 
         private int[] GetInstructionsForOperation(string operation, out int lineIncrease) {

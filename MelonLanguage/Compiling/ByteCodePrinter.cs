@@ -1,7 +1,5 @@
 ﻿using MelonLanguage.Native;
 using System;
-using System.Linq;
-using System.Text;
 
 namespace MelonLanguage.Compiling {
     public class ByteCodePrinter {
@@ -33,15 +31,16 @@ namespace MelonLanguage.Compiling {
 
             foreach (var kv in parseContext.Variables) {
                 if (kv.Value.Variable.value is ScriptFunctionInstance scriptFunctionInstance && scriptFunctionInstance != parent) {
-                    var functionNameBuilder = new StringBuilder("fn ");
-                    if (scriptFunctionInstance.ReturnType != null) {
-                        functionNameBuilder.Append(scriptFunctionInstance.ReturnType).Append(' ');
-                    }
+                    //var functionNameBuilder = new StringBuilder("fn ");
+                    //if (scriptFunctionInstance.ReturnType != null) {
+                    //    functionNameBuilder.Append(scriptFunctionInstance.ReturnType).Append(' ');
+                    //}
 
-                    functionNameBuilder.Append(scriptFunctionInstance.Name).Append(' ');
-                    functionNameBuilder.Append('(').Append(scriptFunctionInstance.ParameterTypes != null ? string.Join(",", (object[])scriptFunctionInstance.ParameterTypes.Select(x=>x.Name)) : "").Append(')');
+                    //functionNameBuilder.Append(scriptFunctionInstance.Name).Append(' ');
+                    //functionNameBuilder.Append('(').Append(scriptFunctionInstance.ParameterTypes != null ? string.Join(",", (object[])scriptFunctionInstance.ParameterTypes.Select(x => x.Name)) : "").Append(')');
 
-                    Console.WriteLine(functionNameBuilder.ToString());
+                    //Console.WriteLine(functionNameBuilder.ToString());
+                    Console.WriteLine(scriptFunctionInstance.ToString());
                     Print(scriptFunctionInstance.ParseContext, kv.Value.Variable.value);
                 }
             }
@@ -51,7 +50,13 @@ namespace MelonLanguage.Compiling {
             foreach (var kv in parseContext.Variables) {
                 //var type = _engine.Types[context.LocalTypes[i]];
 
-                Console.WriteLine($"\t{kv.Key}: ({kv.Value.Type}) {kv.Value.Variable.name}: {kv.Value.Variable.type.Name}");
+                var genericStr = "";
+
+                if (kv.Value.Variable.type.GenericTypes?.Length > 0) {
+                    genericStr = $"<{string.Join(",", (object[])kv.Value.Variable.type.GenericTypes)}>";
+                }
+
+                Console.WriteLine($"\t{kv.Key}: ({kv.Value.Type}) {kv.Value.Variable.name}: {(kv.Value.Variable.type.Type == _engine.functionType ? kv.Value.Variable.value.ToString() : kv.Value.Variable.type.ToString())}");
             }
 
             Console.WriteLine("}\n");
@@ -103,6 +108,10 @@ namespace MelonLanguage.Compiling {
 
                         Console.Write(context.Instruction);
                         break;
+                    case (int)OpCode.STELEM:
+                        break;
+                    case (int)OpCode.LDELEM:
+                        break;
                     case (int)OpCode.LDTYP:
                         context.Next();
 
@@ -118,6 +127,8 @@ namespace MelonLanguage.Compiling {
                         context.Next();
 
                         Console.Write($"MLN_{parseContext.BranchLines[context.Instruction]:x4}");
+                        break;
+                    case (int)OpCode.DUP:
                         break;
                 }
 

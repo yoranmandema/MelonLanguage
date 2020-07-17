@@ -2,7 +2,6 @@
 using MelonLanguage.Native;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace MelonLanguage.Runtime.Interpreter {
     public class MelonInterpreter {
@@ -34,6 +33,12 @@ namespace MelonLanguage.Runtime.Interpreter {
                     case OpCode.LDSTR:
                         LoadString(context);
                         break;
+                    case OpCode.LDTYP:
+                        LDTYP(context);
+                        break;
+                    case OpCode.LDARR:
+                        LDARR(context);
+                        break;
                     case OpCode.ADD:
                     case OpCode.MUL:
                     case OpCode.CEQ:
@@ -47,8 +52,11 @@ namespace MelonLanguage.Runtime.Interpreter {
                     case OpCode.STLOC:
                         STLOC(context);
                         break;
-                    case OpCode.LDTYP:
-                        LDTYP(context);
+                    case OpCode.LDELEM:
+                        LDELEM(context);
+                        break;
+                    case OpCode.STELEM:
+                        STELEM(context);
                         break;
                     case OpCode.BR:
                         BR(context);
@@ -70,6 +78,9 @@ namespace MelonLanguage.Runtime.Interpreter {
                     case OpCode.RET:
                         RET(context);
                         break;
+                    case OpCode.DUP:
+                        DUP(context);
+                        break;
                     default:
                         throw new MelonException($"Unknown instruction '{context.Instruction:X4}'");
                 }
@@ -86,6 +97,36 @@ namespace MelonLanguage.Runtime.Interpreter {
             return 0;
         }
 
+        private void LDARR(Context context) {
+            context.Push(_engine.CreateArray(new MelonObject[0]));
+        }
+
+        private void DUP(Context context) {
+            context.Push(context.Last());
+        }
+
+        private void STELEM(Context context) {
+            var index = context.Pop();
+            var value = context.Pop();
+            var subject = context.Pop();
+
+            if (subject is ArrayInstance arrayInstance) {
+                if (index is IntegerInstance integerInstance) {
+                    arrayInstance.SetValue(integerInstance.value, value);
+                }
+            }
+        }
+
+        private void LDELEM(Context context) {
+            var index = context.Pop();
+            var subject = context.Pop();
+
+            if (subject is ArrayInstance arrayInstance) {
+                if (index is IntegerInstance integerInstance) {
+                    context.Push(arrayInstance.GetValue(integerInstance.value));
+                }
+            }
+        }
 
         private void LoadString(Context context) {
             context.Next();
