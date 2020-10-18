@@ -9,7 +9,7 @@ namespace MelonLanguage.Native {
 
         }
         public void InitProperties() {
-            Prototype = new ArrayPrototype(Engine);
+            Prototype = new ArrayPrototype(Engine, this);
         }
 
         public ArrayInstance Construct(MelonObject[] values) {

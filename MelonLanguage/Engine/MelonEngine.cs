@@ -154,7 +154,7 @@ namespace MelonLanguage {
             return booleanType.Construct(value);
         }
 
-        internal ArrayInstance CreateArray(MelonObject[] values) {
+        internal ArrayInstance CreateArray(params MelonObject[] values) {
             return arrayType.Construct(values);
         }
 

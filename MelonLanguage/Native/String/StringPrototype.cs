@@ -2,9 +2,9 @@
 
 namespace MelonLanguage.Native {
     public class StringPrototype : MelonPrototype {
-        public StringPrototype(MelonEngine engine) : base(engine) {
+        public StringPrototype(MelonEngine engine, MelonType type) : base(engine, type) {
             var properties = new PropertyDictionary {
-                ["Length"] = new Property(new NativeFunctionInstance("Length", engine, Length))
+                ["Length"] = new Property(new NativeFunctionInstance("Length", type, engine, Length))
             };
 
             SetProperties(properties);

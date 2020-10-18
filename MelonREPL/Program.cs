@@ -18,7 +18,7 @@ namespace MelonREPL {
         public static void Main(string[] args) {
             MelonEngine engine = new MelonEngine();
 
-            engine.FastAdd("print", new NativeFunctionInstance("print", engine, print));
+            engine.FastAdd("print", new NativeFunctionInstance("print", null, engine, print));
 
             const int runs = 1000000;
             string _file = "";

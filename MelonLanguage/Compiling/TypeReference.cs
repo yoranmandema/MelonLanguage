@@ -27,7 +27,7 @@ namespace MelonLanguage.Compiling {
                 return false;
             }
 
-            if (GenericTypes.Any() && type.GenericTypes.Any()) {
+            if (GenericTypes?.Any() == true && type.GenericTypes?.Any() == true) {
                 if (GenericTypes.Length != GenericTypes.Length) {
                     return false;
                 }

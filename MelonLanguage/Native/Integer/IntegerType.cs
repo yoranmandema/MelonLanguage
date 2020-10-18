@@ -10,10 +10,10 @@ namespace MelonLanguage.Native {
         }
 
         public void InitProperties () {
-            Prototype = new IntegerPrototype(Engine);
+            Prototype = new IntegerPrototype(Engine, this);
 
             var properties = new PropertyDictionary() {
-                ["Parse"] = new Property(new NativeFunctionInstance("Parse", Engine, Parse)),
+                ["Parse"] = new Property(new NativeFunctionInstance("Parse", this, Engine, Parse)),
             };
 
             SetProperties(properties);

@@ -10,7 +10,9 @@ namespace MelonLanguage.Native {
 
         public NativeFunctionDelegate Delegate { get; }
 
-        public NativeFunctionInstance(string name, MelonEngine engine, NativeFunctionDelegate del) : base(name, engine) {
+        public NativeFunctionInstance(string name, MelonObject self, MelonEngine engine, NativeFunctionDelegate del) : base(name, engine) {
+            Self = self;
+
             ReturnTypeAttribute returnTypeAttribute = del.Method.GetCustomAttribute<ReturnTypeAttribute>();
 
             if (returnTypeAttribute != null) {
@@ -57,7 +59,7 @@ namespace MelonLanguage.Native {
             if (CheckSignature(method)) {
                 var del = (NativeFunctionDelegate)method.CreateDelegate(typeof(NativeFunctionDelegate));
 
-                function = new NativeFunctionInstance(del.Method.Name, engine, del);
+                function = new NativeFunctionInstance(del.Method.Name, null, engine, del);
 
                 return true;
             }

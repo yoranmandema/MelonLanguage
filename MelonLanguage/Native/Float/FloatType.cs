@@ -9,7 +9,7 @@ namespace MelonLanguage.Native {
         }
 
         public void InitProperties () {
-            Prototype = new FloatPrototype(Engine);
+            Prototype = new FloatPrototype(Engine, this);
         }
 
         public FloatInstance Construct(double value) {

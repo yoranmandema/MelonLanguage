@@ -1,6 +1,6 @@
 ﻿namespace MelonLanguage.Native {
     public class FloatPrototype : MelonPrototype {
-        public FloatPrototype(MelonEngine engine) : base(engine) {
+        public FloatPrototype(MelonEngine engine, MelonType type) : base(engine, type) {
         }
     }
 }

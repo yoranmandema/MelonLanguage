@@ -199,6 +199,10 @@ namespace MelonLanguage.Visitor {
 
             int id;
 
+            if (expressionResult.value is IGeneric generic) {
+                generic.GenericTypes = typeReference.GenericTypes;
+            }
+
             if (variable != null) {
                 throw new MelonException($"Variable '{name}' already defined.");
             }
@@ -266,7 +270,7 @@ namespace MelonLanguage.Visitor {
                 return new ParseResult {
                     value = variable.value,
                     type = ParseResultTypes.Local,
-                    typeReference = new TypeReference(_engine, GetTypeReference(variable.type.Type))
+                    typeReference = variable.type
                 };
             }
             else if (typeKv.Value != null) {
@@ -307,6 +311,8 @@ namespace MelonLanguage.Visitor {
 
                 return new ParseResult {
                     value = memberValue,
+                    self = left.value,
+                    selfTypeReference = left.typeReference,
                     typeReference = new TypeReference(_engine, GetTypeReference(memberValue))
                 };
             }
@@ -315,6 +321,8 @@ namespace MelonLanguage.Visitor {
 
                 return new ParseResult {
                     value = memberValue,
+                    self = left.value,
+                    selfTypeReference = left.typeReference,
                     typeReference = new TypeReference(_engine, GetTypeReference(memberValue))
                 };
             }
@@ -329,6 +337,7 @@ namespace MelonLanguage.Visitor {
 
         public override ParseResult VisitCallExp(MelonParser.CallExpContext context) {
             var functionResult = Visit(context.Function);
+
             TypeReference returnType = null;
             FunctionInstance function = null;
 
@@ -350,10 +359,20 @@ namespace MelonLanguage.Visitor {
                 var expressionResult = Visit(args[i]);
                 parseContext.instructions.Add((int)OpCode.LDARG);
                 instructionline++;
+                var parameterType = function.ParameterTypes[i];
 
-                if (i < function.ParameterTypes?.Length - 1 && function.ParameterTypes[i].Type.TypeId != 0) {
-                    if (!function.ParameterTypes[i].Type.IsEqualTo(expressionResult.typeReference) && _engine.GetType(function.ParameterTypes[i].Type.TypeId) != _engine.anyType) {
-                        throw new MelonException($"Expected argument of type '{function.ParameterTypes[i].Type}'");
+                if (i < function.ParameterTypes?.Length) {                   
+                    if (parameterType.IsGeneric) {
+                        var genericType = (functionResult.self as IGeneric).GenericTypes[parameterType.GenericIndex];
+
+                        if (!expressionResult.typeReference.IsEqualTo(genericType)) {
+                            throw new MelonException($"Expected argument of type '{genericType}'");
+                        }
+                    }
+                    else {
+                        if (!parameterType.Type.IsEqualTo(expressionResult.typeReference)) {
+                            throw new MelonException($"Expected argument of type '{parameterType.Type}'");
+                        }
                     }
                 }
             }
@@ -525,11 +544,15 @@ namespace MelonLanguage.Visitor {
             parseContext.instructions.Add((int)OpCode.LDARR);
             instructionline++;
 
+            var value = _engine.CreateArray();
+
             for (int i = 0; i < context.array().expressionGroup().expression()?.Length; i++) {
                 parseContext.instructions.Add((int)OpCode.DUP);
                 instructionline++;
 
                 var expressionResult = Visit(context.array().expressionGroup().expression(i));
+
+                value.SetValue(i, expressionResult.value);
 
                 EmitLDINT(i);
 
@@ -537,7 +560,9 @@ namespace MelonLanguage.Visitor {
                 instructionline++;
             }
 
+
             return new ParseResult {
+                value = value,
                 typeReference = new TypeReference(_engine, _engine.arrayType)
             };
         }

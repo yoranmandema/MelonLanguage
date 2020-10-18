@@ -10,7 +10,7 @@ namespace MelonLanguage.Native {
         }
 
         public void  InitProperties () {
-            Prototype = new BooleanPrototype(Engine);
+            Prototype = new BooleanPrototype(Engine, this);
         }
 
         public BooleanInstance Construct(bool value) {

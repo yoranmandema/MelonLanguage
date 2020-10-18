@@ -9,7 +9,7 @@ namespace MelonLanguage.Native {
         }
 
         public void InitProperties () {
-            Prototype = new StringPrototype(Engine);
+            Prototype = new StringPrototype(Engine, this);
         }
 
         public StringInstance Construct(string value) {

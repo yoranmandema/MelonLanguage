@@ -3,10 +3,10 @@
 namespace MelonLanguage.Native {
     public class ArrayPrototype : MelonPrototype {
 
-        public ArrayPrototype(MelonEngine engine) : base(engine) {
+        public ArrayPrototype(MelonEngine engine, MelonType type) : base(engine, type) {
             var properties = new PropertyDictionary {
-                ["Length"] = new Property(new NativeFunctionInstance("Length", engine, Length)),
-                ["Push"] = new Property(new NativeFunctionInstance("Push", engine, Push))
+                ["Length"] = new Property(new NativeFunctionInstance("Length", type, engine, Length)),
+                ["Push"] = new Property(new NativeFunctionInstance("Push", type, engine, Push))
             };
 
             SetProperties(properties);
