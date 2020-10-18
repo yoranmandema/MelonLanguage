@@ -1,9 +1,15 @@
-﻿namespace MelonLanguage.Native {
-    public class ArrayType : MelonType {
+﻿using System;
+
+namespace MelonLanguage.Native {
+    public class ArrayType : MelonType, INativeType {
         public override string Name { get; } = "Array";
+        public Type NativeType => typeof(Array);
 
         public ArrayType(MelonEngine engine) : base(engine) {
-            Prototype = new ArrayPrototype(engine);
+
+        }
+        public void InitProperties() {
+            Prototype = new ArrayPrototype(Engine);
         }
 
         public ArrayInstance Construct(MelonObject[] values) {
