@@ -1,9 +1,15 @@
-﻿namespace MelonLanguage.Native {
-    public class FloatType : MelonType {
+﻿using System;
+
+namespace MelonLanguage.Native {
+    public class FloatType : MelonType, INativeType {
         public override string Name { get; } = "float";
+        public Type NativeType => typeof(float);
 
         public FloatType(MelonEngine engine) : base(engine) {
-            Prototype = new FloatPrototype(engine);
+        }
+
+        public void InitProperties () {
+            Prototype = new FloatPrototype(Engine);
         }
 
         public FloatInstance Construct(double value) {

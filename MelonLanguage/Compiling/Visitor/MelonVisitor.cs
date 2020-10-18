@@ -329,14 +329,14 @@ namespace MelonLanguage.Visitor {
 
         public override ParseResult VisitCallExp(MelonParser.CallExpContext context) {
             var functionResult = Visit(context.Function);
-            var returnType = 0;
+            TypeReference returnType = null;
             FunctionInstance function = null;
 
             if (functionResult.value != null && functionResult.value is FunctionInstance func) {
                 function = func;
 
                 if (function.ReturnType != null) {
-                    returnType = _engine.GetTypeID(function.ReturnType);
+                    returnType = function.ReturnType;
                 }
             }
 
@@ -351,12 +351,9 @@ namespace MelonLanguage.Visitor {
                 parseContext.instructions.Add((int)OpCode.LDARG);
                 instructionline++;
 
-                if (i < function.ParameterTypes?.Length - 1 && _engine.GetTypeID(function.ParameterTypes[i].Type) != 0) {
-                    var parameterType = _engine.GetTypeID(function.ParameterTypes[i].Type);
-
-                    if (parameterType != expressionResult.typeReference.TypeId && _engine.GetType(parameterType) != _engine.anyType) {
-                        var realType = _engine.GetType(parameterType);
-                        throw new MelonException($"Expected argument of type '{realType.Name}'");
+                if (i < function.ParameterTypes?.Length - 1 && function.ParameterTypes[i].Type.TypeId != 0) {
+                    if (!function.ParameterTypes[i].Type.IsEqualTo(expressionResult.typeReference) && _engine.GetType(function.ParameterTypes[i].Type.TypeId) != _engine.anyType) {
+                        throw new MelonException($"Expected argument of type '{function.ParameterTypes[i].Type}'");
                     }
                 }
             }
@@ -365,7 +362,7 @@ namespace MelonLanguage.Visitor {
             instructionline++;
 
             return new ParseResult {
-                typeReference = new TypeReference(_engine, returnType)
+                typeReference = returnType
             };
         }
 
@@ -399,8 +396,10 @@ namespace MelonLanguage.Visitor {
                         type = typeKv.Value;
                     }
 
-                    functionEnvironment.AddVariable(parameter.Name.value, null, new TypeReference(_engine, type));
-                    functionParameters.Add(new FunctionParameter(parameter.Name.value, type.GetType(), isVarargs));
+                    var typeRef = new TypeReference(_engine, type);
+
+                    functionEnvironment.AddVariable(parameter.Name.value, null, typeRef);
+                    functionParameters.Add(new FunctionParameter(parameter.Name.value, typeRef, isVarargs));
                 }
             }
 
@@ -419,7 +418,7 @@ namespace MelonLanguage.Visitor {
                     throw new MelonException($"Could not find type '{typeName}'");
                 }
 
-                function.ReturnType = typeKv.Value.GetType();
+                function.ReturnType = new TypeReference(_engine,typeKv.Value);
             }
 
             MelonVisitor visitor = new MelonVisitor(_engine, function);
@@ -439,7 +438,7 @@ namespace MelonLanguage.Visitor {
                 var expressionResult = Visit(context.Expression);
 
                 if (_scriptFunction.ReturnType.GetType() != typeof(AnyType)) {
-                    var isValidReturnType = _scriptFunction.ReturnType == _engine.Types[expressionResult.typeReference.TypeId].GetType();
+                    var isValidReturnType = _scriptFunction.ReturnType.IsEqualTo(expressionResult.typeReference);
 
                     if (!isValidReturnType) {
                         throw new MelonException($"Expression must return value of type '{_scriptFunction.ReturnType}'");

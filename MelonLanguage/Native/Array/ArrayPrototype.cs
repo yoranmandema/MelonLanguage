@@ -5,7 +5,8 @@ namespace MelonLanguage.Native {
 
         public ArrayPrototype(MelonEngine engine) : base(engine) {
             var properties = new PropertyDictionary {
-                ["Length"] = new Property(new NativeFunctionInstance("Length", engine, Length))
+                ["Length"] = new Property(new NativeFunctionInstance("Length", engine, Length)),
+                ["Push"] = new Property(new NativeFunctionInstance("Push", engine, Push))
             };
 
             SetProperties(properties);
@@ -17,8 +18,11 @@ namespace MelonLanguage.Native {
         }
 
         [ReturnType(typeof(ArrayType))]
+        [Parameter("item",0,true)]
         public MelonObject Push(MelonObject self, Arguments arguments) {
             var array = (self as ArrayInstance);
+
+            array.values.AddRange(arguments.Values);
 
             return array;
         }

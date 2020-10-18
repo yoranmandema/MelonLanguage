@@ -1,5 +1,6 @@
 ﻿using MelonLanguage.Native.Function;
 using MelonLanguage.Runtime;
+using MelonLanguage.Compiling;
 using System.Linq;
 using System.Reflection;
 
@@ -13,7 +14,7 @@ namespace MelonLanguage.Native {
             ReturnTypeAttribute returnTypeAttribute = del.Method.GetCustomAttribute<ReturnTypeAttribute>();
 
             if (returnTypeAttribute != null) {
-                ReturnType = returnTypeAttribute.Type;
+                ReturnType = new TypeReference(engine, engine.GetType(returnTypeAttribute.Type));
             }
 
             ParameterAttribute[] parameterAttributes = del.Method.GetCustomAttributes<ParameterAttribute>().ToArray();
@@ -24,8 +25,12 @@ namespace MelonLanguage.Native {
                 bool hasVarargs = false;
 
                 for (int i = 0; i < parameterAttributes.Length; i++) {
-                    ParameterTypes[i] = new FunctionParameter(parameterAttributes[i].Name, parameterAttributes[i].Type);
-
+                    if (parameterAttributes[i].IsGeneric) {
+                        ParameterTypes[i] = new FunctionParameter(parameterAttributes[i].Name, parameterAttributes[i].GenericIndex);
+                    } else {
+                        ParameterTypes[i] = new FunctionParameter(parameterAttributes[i].Name, new TypeReference(engine, engine.GetType(parameterAttributes[i].Type)));
+                    }
+                 
                     if (parameterAttributes[i].IsVarargs) {
                         if (hasVarargs || i < parameterAttributes.Length - 1) {
                             throw new MelonException("Varargs parameter can only appear once and has to be the last parameter");
@@ -38,7 +43,7 @@ namespace MelonLanguage.Native {
                 }
             }
             else {
-                ParameterTypes = new[] { new FunctionParameter("", typeof(AnyType)) { IsVarargs = true } };
+                ParameterTypes = new[] { new FunctionParameter("", new TypeReference(engine,engine.anyType)) { IsVarargs = true } };
             }
 
             Delegate = del;

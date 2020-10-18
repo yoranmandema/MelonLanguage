@@ -1,14 +1,19 @@
 ﻿using MelonLanguage.Native.Function;
+using System;
 
 namespace MelonLanguage.Native {
-    public class IntegerType : MelonType {
+    public class IntegerType : MelonType, INativeType {
         public override string Name { get; } = "int";
+        public Type NativeType => typeof(int);
 
         public IntegerType(MelonEngine engine) : base(engine) {
-            Prototype = new IntegerPrototype(engine);
+        }
+
+        public void InitProperties () {
+            Prototype = new IntegerPrototype(Engine);
 
             var properties = new PropertyDictionary() {
-                ["Parse"] = new Property(new NativeFunctionInstance("Parse", engine, Parse)),
+                ["Parse"] = new Property(new NativeFunctionInstance("Parse", Engine, Parse)),
             };
 
             SetProperties(properties);

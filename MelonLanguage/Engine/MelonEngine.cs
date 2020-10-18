@@ -45,6 +45,8 @@ namespace MelonLanguage {
             new TypeMapper(typeof(BooleanInstance), typeof(bool), (e,i) => ((BooleanInstance)i).value),
         };
 
+        public Dictionary<Type, MelonType> NativeTypeTable { get; } = new Dictionary<Type, MelonType>();
+
         public MelonEngine() {
             GlobalEnvironment = new LexicalEnvironment(this, true);
             Strings = new Dictionary<int, string>();
@@ -59,6 +61,12 @@ namespace MelonLanguage {
             floatType = AddType(new FloatType(this));
             stringType = AddType(new StringType(this));
             booleanType = AddType(new BooleanType(this));
+
+            foreach (var kv in Types) {
+                if (kv.Value is INativeType nativeType) {
+                    nativeType.InitProperties();
+                }
+            }
         }
 
         public T AddType<T>(T type) where T : MelonType {
@@ -67,8 +75,11 @@ namespace MelonLanguage {
             if (exists) {
                 throw new MelonException("Type already exists!");
             }
-            else {
-                Types[Types.Count] = type;
+                  
+            Types[Types.Count] = type;
+
+            if (type is INativeType nativeType) {
+                NativeTypeTable[nativeType.NativeType] = type;
             }
 
             return type;
@@ -77,6 +88,17 @@ namespace MelonLanguage {
         public MelonType GetType(int id) {
             return Types[id];
         }
+
+        public MelonType GetType(Type type) {
+            var typeKV = Types.Values.FirstOrDefault(x => x.GetType() == type);
+
+            if (typeKV == null) {
+                throw new MelonException($"Type '{type}' not present");
+            }
+
+            return Types.First(x => x.Value.GetType() == type).Value;
+        }
+
 
         public int GetTypeID(Type type) {
             var typeKV = Types.Values.FirstOrDefault(x => x.GetType() == type);

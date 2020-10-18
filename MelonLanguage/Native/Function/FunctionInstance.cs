@@ -1,11 +1,12 @@
-﻿using System;
+﻿using MelonLanguage.Compiling;
+using System;
 using System.Text;
 
 namespace MelonLanguage.Native {
     public abstract class FunctionInstance : MelonInstance {
         public string Name { get; }
         public MelonObject Self { get; set; }
-        public Type ReturnType { get; set; }
+        public TypeReference ReturnType { get; set; }
         public FunctionParameter[] ParameterTypes { get; set; }
 
         public FunctionInstance(string name, MelonEngine engine) : base(engine) {
@@ -19,7 +20,7 @@ namespace MelonLanguage.Native {
             StringBuilder stringBuilder = new StringBuilder();
             stringBuilder.Append("fn ");
             if (ReturnType != null) {
-                stringBuilder.Append(ReturnType.Name).Append(' ');
+                stringBuilder.Append(ReturnType.ToString()).Append(' ');
             }
 
             stringBuilder.Append(Name);
