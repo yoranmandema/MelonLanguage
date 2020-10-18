@@ -4,7 +4,7 @@ grammar Melon;
  * Parser Rules
  */
 program : block EOF ;
-block : ( variableDefinition | functionDefinition | assignment | computedMemberAssigment | while  | expression | return)*;
+block : ( variableDefinition | functionDefinition | assignment | computedMemberAssigment | while| return | expression )*;
  
 while : WHILE expression '{' block '}' 
 #whileStatement
@@ -14,7 +14,11 @@ functionDefinition : FN (ReturnType=name)? Name=name '(' (Parameters=parameters)
 #functionDefinitionStatement
 ;
 
-parameters: parameter (',' parameter)*;
+type: name genericParameters? ;
+
+genericParameters: ARROWLEFT type (COMMA type)* ARROWRIGHT ;
+
+parameters: parameter (COMMA parameter)*;
 
 parameter:  (Type=type)? VARARGS? Name=name ('=' Expression=expression)?;
 
@@ -26,10 +30,6 @@ variableDefinition: (Type=type | LET) Name=name ASSIGN expression
 #variableDefinitionStatement
 ;
 
-type: name genericParameters? ;
-
-genericParameters: '<' type (',' type)* '>' ;
-
 assignment : name ASSIGN expression 
 #assignStatement
 ;
@@ -38,7 +38,7 @@ computedMemberAssigment: name '[' Index=expression ']' ASSIGN Expression=express
 #computedMemberAssignStatement
 ;
 
-expressionGroup: (expression (',' expression)*)?;
+expressionGroup: (expression (COMMA expression)*)?;
 
 expression: 
 	LEFTPARENTHESIS expression RIGHTPARENTHESIS 
@@ -55,7 +55,7 @@ expression:
 	#binaryOperationExp
     | Left=expression Operation=(PLUS|MINUS) Right=expression				
 	#binaryOperationExp
-	| Left=expression Operation=(LESS|LESSEQ|GREATER|GREATEREQ)	Right=expression			
+	| Left=expression Operation=(ARROWLEFT|LESSEQ|ARROWRIGHT|GREATEREQ)	Right=expression			
 	#binaryOperationExp
     | Left=expression Operation=(EQUAL|NOTEQUAL)	Right=expression			
 	#binaryOperationExp
@@ -131,9 +131,16 @@ WHILE					: 'while';
 RETURN					: 'return';
 VARARGS					: '...';
 
-LESS					: '<';
+BITAND					: '&';
+BITOR					: '^';
+BITXOR					: '|'; 
+/*BITSHIFTL				: '<<'; 
+BITSHIFTR				: '>>'; 
+BITSHIFTUR				: '>>>'; */
+
+ARROWLEFT				: '<';
 LESSEQ					: '<=';
-GREATER					: '>';
+ARROWRIGHT				: '>';
 GREATEREQ				: '>=';
 NOTEQUAL				: 'is not';
 EQUAL					: 'is';
@@ -147,13 +154,6 @@ PLUS					: '+';
 MINUS					: '-';
 REMAINDER				: '%';
 EXPONENT				: '**';
-
-BITAND					: '&';
-BITOR					: '^';
-BITXOR					: '|'; 
-BITSHIFTL				: '<<'; 
-BITSHIFTR				: '>>'; 
-BITSHIFTUR				: '>>>'; 
 
 INCREMENT				: '++';
 DECREMENT				: '--';

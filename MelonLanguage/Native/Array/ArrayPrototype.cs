@@ -15,5 +15,12 @@ namespace MelonLanguage.Native {
         public MelonObject Length(MelonObject self, Arguments arguments) {
             return Engine.CreateInteger((self as ArrayInstance).values.Count);
         }
+
+        [ReturnType(typeof(ArrayType))]
+        public MelonObject Push(MelonObject self, Arguments arguments) {
+            var array = (self as ArrayInstance);
+
+            return array;
+        }
     }
 }

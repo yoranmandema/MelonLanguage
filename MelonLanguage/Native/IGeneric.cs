@@ -1,7 +1,8 @@
-﻿using System;
+﻿using MelonLanguage.Compiling;
+using System;
 
 namespace MelonLanguage.Native {
     internal interface IGeneric {
-        public Type[] GenericTypes { get; set; }
+        public TypeReference[] GenericTypes { get; set; }
     }
 }

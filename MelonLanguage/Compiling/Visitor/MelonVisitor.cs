@@ -138,10 +138,10 @@ namespace MelonLanguage.Visitor {
             //return new int[0];
         }
 
-        private TypeReference CreateTypeReference (MelonParser.TypeContext typeContext) {
+        private TypeReference CreateTypeReference(MelonParser.TypeContext typeContext) {
             var type = _engine.Types.FirstOrDefault(x => x.Value.Name == typeContext.name().value).Value;
 
-            TypeReference typeReference = new TypeReference(type);
+            TypeReference typeReference = new TypeReference(_engine, type);
 
             if (typeContext.genericParameters()?.type() != null) {
                 typeReference.GenericTypes = new TypeReference[typeContext.genericParameters().type().Length];
@@ -174,8 +174,8 @@ namespace MelonLanguage.Visitor {
                     throw new MelonException($"Cannot assign to void");
                 }
 
-                if (expressionResult.typeReference != typeKv.Key && typeKv.Key != 0) {
-                    throw new MelonException($"Variable of type '{typeName}' can't be assigned to '{_engine.GetType(expressionResult.typeReference).Name}'");
+                if (expressionResult.typeReference.TypeId != typeKv.Key && typeKv.Key != 0) {
+                    throw new MelonException($"Variable of type '{typeName}' can't be assigned to '{expressionResult.typeReference.Type.Name}'");
                 }
 
                 typeReference = CreateTypeReference(context.Type);
@@ -184,14 +184,14 @@ namespace MelonLanguage.Visitor {
                 typeId = typeKv.Key;
             }
             else {
-                type = _engine.GetType(expressionResult.typeReference);
-                typeReference = new TypeReference(type);
+                type = expressionResult.typeReference.Type;
+                typeReference = new TypeReference(_engine, type);
 
                 if (type == _engine.voidType) {
                     throw new MelonException($"Cannot assign to void");
                 }
 
-                typeId = expressionResult.typeReference;
+                typeId = expressionResult.typeReference.TypeId;
             }
 
             var name = context.Name.value;
@@ -222,8 +222,8 @@ namespace MelonLanguage.Visitor {
             var variable = parseContext.LexicalEnvironment.GetVariable(name);
             var variableReference = parseContext.Variables.First(x => x.Value.Variable == variable).Value;
 
-            if (_engine.GetType(expressionResult.typeReference) != variable.type.Type) {
-                throw new MelonException($"Variable of type '{variable.type.Type.Name}' can't be assigned to '{_engine.GetType(expressionResult.typeReference).Name}'");
+            if (expressionResult.typeReference.Type != variable.type.Type) {
+                throw new MelonException($"Variable of type '{variable.type.Type.Name}' can't be assigned to '{expressionResult.typeReference.Type.Name}'");
             }
 
             int id;
@@ -266,7 +266,7 @@ namespace MelonLanguage.Visitor {
                 return new ParseResult {
                     value = variable.value,
                     type = ParseResultTypes.Local,
-                    typeReference = GetTypeReference(variable.type.Type)
+                    typeReference = new TypeReference(_engine, GetTypeReference(variable.type.Type))
                 };
             }
             else if (typeKv.Value != null) {
@@ -276,7 +276,7 @@ namespace MelonLanguage.Visitor {
                 return new ParseResult {
                     type = ParseResultTypes.Type,
                     value = typeKv.Value,
-                    typeReference = typeKv.Key
+                    typeReference = new TypeReference(_engine, typeKv.Key)
                 };
             }
             else {
@@ -285,29 +285,29 @@ namespace MelonLanguage.Visitor {
         }
 
         public override ParseResult VisitMemberAccessExp(MelonParser.MemberAccessExpContext context) {
-            var left = Visit(context.expression());
+            ParseResult left = Visit(context.expression());
 
-            var memberName = context.name().GetText();
+            string memberName = context.name().GetText();
 
             parseContext.instructions.Add((int)OpCode.LDPRP);
             parseContext.instructions.Add(GetString(memberName));
 
             instructionline++;
 
-            if (left.typeReference == 0) {
+            if (left.typeReference.TypeId == 0) {
                 return new ParseResult {
-                    typeReference = 0
+                    typeReference = new TypeReference(_engine, 0)
                 };
             }
 
-            var prototype = _engine.GetType(left.typeReference).Prototype;
+            var prototype = left.typeReference.Type.Prototype;
 
             if (left.value?.Properties.ContainsKey(memberName) == true) {
                 var memberValue = left.value.GetProperty(memberName).value;
 
                 return new ParseResult {
                     value = memberValue,
-                    typeReference = GetTypeReference(memberValue)
+                    typeReference = new TypeReference(_engine, GetTypeReference(memberValue))
                 };
             }
             else if (prototype?.Properties.ContainsKey(memberName) == true) {
@@ -315,7 +315,7 @@ namespace MelonLanguage.Visitor {
 
                 return new ParseResult {
                     value = memberValue,
-                    typeReference = GetTypeReference(memberValue)
+                    typeReference = new TypeReference(_engine, GetTypeReference(memberValue))
                 };
             }
             else {
@@ -354,7 +354,7 @@ namespace MelonLanguage.Visitor {
                 if (i < function.ParameterTypes?.Length - 1 && _engine.GetTypeID(function.ParameterTypes[i].Type) != 0) {
                     var parameterType = _engine.GetTypeID(function.ParameterTypes[i].Type);
 
-                    if (parameterType != expressionResult.typeReference && _engine.GetType(parameterType) != _engine.anyType) {
+                    if (parameterType != expressionResult.typeReference.TypeId && _engine.GetType(parameterType) != _engine.anyType) {
                         var realType = _engine.GetType(parameterType);
                         throw new MelonException($"Expected argument of type '{realType.Name}'");
                     }
@@ -365,7 +365,7 @@ namespace MelonLanguage.Visitor {
             instructionline++;
 
             return new ParseResult {
-                typeReference = returnType
+                typeReference = new TypeReference(_engine, returnType)
             };
         }
 
@@ -399,7 +399,7 @@ namespace MelonLanguage.Visitor {
                         type = typeKv.Value;
                     }
 
-                    functionEnvironment.AddVariable(parameter.Name.value, null, new TypeReference(type));
+                    functionEnvironment.AddVariable(parameter.Name.value, null, new TypeReference(_engine, type));
                     functionParameters.Add(new FunctionParameter(parameter.Name.value, type.GetType(), isVarargs));
                 }
             }
@@ -408,7 +408,7 @@ namespace MelonLanguage.Visitor {
                 ParameterTypes = functionParameters.ToArray()
             };
 
-            var variable = parseContext.LexicalEnvironment.AddVariable(name, function, new TypeReference(_engine.functionType));
+            var variable = parseContext.LexicalEnvironment.AddVariable(name, function, new TypeReference(_engine, _engine.functionType));
             parseContext.AddVariableReference(variable, VariableReferenceType.Local);
 
             if (context.ReturnType != null) {
@@ -439,7 +439,7 @@ namespace MelonLanguage.Visitor {
                 var expressionResult = Visit(context.Expression);
 
                 if (_scriptFunction.ReturnType.GetType() != typeof(AnyType)) {
-                    var isValidReturnType = _scriptFunction.ReturnType == _engine.Types[expressionResult.typeReference].GetType();
+                    var isValidReturnType = _scriptFunction.ReturnType == _engine.Types[expressionResult.typeReference.TypeId].GetType();
 
                     if (!isValidReturnType) {
                         throw new MelonException($"Expression must return value of type '{_scriptFunction.ReturnType}'");
@@ -473,12 +473,12 @@ namespace MelonLanguage.Visitor {
             var opCode = _opCodeText[context.Operation.Text];
             var operatorName = MelonVisitor._opCodeText.FirstOrDefault(x => x.Value == opCode).Key;
 
-            var leftType = _engine.GetType(left.typeReference);
-            var rightType = _engine.GetType(right.typeReference);
+            var leftType = left.typeReference.Type;
+            var rightType = right.typeReference.Type;
 
             var getOutComeType = _expressionSolver.GetTypeForOperation(opCode, leftType, rightType);
 
-            if (getOutComeType == null && (left.typeReference != 0 && right.typeReference != 0)) {
+            if (getOutComeType == null && (left.typeReference.TypeId != 0 && right.typeReference.TypeId != 0)) {
                 throw new MelonException($"No such operation: '{leftType.Name}' {operatorName} '{rightType.Name}'.");
             }
 
@@ -507,7 +507,7 @@ namespace MelonLanguage.Visitor {
                     return new ParseResult {
                         type = ParseResultTypes.Literal,
                         value = result,
-                        typeReference = GetTypeReference(result)
+                        typeReference = new TypeReference(_engine, GetTypeReference(result))
                     };
                 }
             }
@@ -518,7 +518,7 @@ namespace MelonLanguage.Visitor {
             var typeReference = _engine.Types.FirstOrDefault(t => t.Value.GetType() == getOutComeType).Key;
 
             return new ParseResult {
-                typeReference = typeReference
+                typeReference = new TypeReference(_engine, typeReference)
             };
         }
 
@@ -539,7 +539,7 @@ namespace MelonLanguage.Visitor {
             }
 
             return new ParseResult {
-                typeReference = GetTypeReference(_engine.arrayType)
+                typeReference = new TypeReference(_engine, _engine.arrayType)
             };
         }
 
@@ -551,7 +551,7 @@ namespace MelonLanguage.Visitor {
             instructionline++;
 
             return new ParseResult {
-                typeReference = GetTypeReference(_engine.anyType)
+                typeReference = new TypeReference(_engine, _engine.anyType)
             };
         }
 
@@ -633,7 +633,7 @@ namespace MelonLanguage.Visitor {
             return new ParseResult {
                 type = ParseResultTypes.Literal,
                 value = value,
-                typeReference = GetTypeReference(value)
+                typeReference = new TypeReference(_engine, GetTypeReference(value))
             };
         }
 
@@ -650,7 +650,7 @@ namespace MelonLanguage.Visitor {
             return new ParseResult {
                 type = ParseResultTypes.Literal,
                 value = value,
-                typeReference = GetTypeReference(value)
+                typeReference = new TypeReference(_engine, GetTypeReference(value))
             };
         }
 
@@ -668,7 +668,7 @@ namespace MelonLanguage.Visitor {
             return new ParseResult {
                 type = ParseResultTypes.Literal,
                 value = value,
-                typeReference = GetTypeReference(value)
+                typeReference = new TypeReference(_engine, GetTypeReference(value))
             };
         }
 
@@ -693,7 +693,7 @@ namespace MelonLanguage.Visitor {
             return new ParseResult {
                 type = ParseResultTypes.Literal,
                 value = value,
-                typeReference = GetTypeReference(value)
+                typeReference = new TypeReference(_engine, GetTypeReference(value))
             };
         }
     }

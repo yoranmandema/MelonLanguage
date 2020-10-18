@@ -1,4 +1,5 @@
-﻿using MelonLanguage.Runtime;
+﻿using MelonLanguage.Compiling;
+using MelonLanguage.Runtime;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ namespace MelonLanguage.Native {
     public class ArrayInstance : MelonInstance, IGeneric {
         public List<MelonObject> values;
 
-        public Type[] GenericTypes { get; set; }
+        public TypeReference[] GenericTypes { get; set; }
 
         public ArrayInstance(MelonEngine engine, MelonObject[] vals) : base(engine) {
             Type = engine.arrayType;

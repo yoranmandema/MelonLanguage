@@ -88,7 +88,6 @@ namespace MelonLanguage {
             return Types.First(x => x.Value.GetType() == type).Key;
         }
 
-
         public int GetTypeID(MelonType type) {
             var typeKV = Types.Values.FirstOrDefault(x => x == type);
 
@@ -100,7 +99,7 @@ namespace MelonLanguage {
         }
 
         public MelonEngine FastAdd(string name, MelonObject value) {
-            GlobalEnvironment.AddVariable(name, value, new TypeReference(GetTypeFromValue(value)));
+            GlobalEnvironment.AddVariable(name, value, new TypeReference(this, GetTypeFromValue(value)));
 
             return this;
         }
